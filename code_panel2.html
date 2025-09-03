@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Reward Code Admin Panel | CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="images/favicon.png" />
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Minecraft', monospace;
+            background: url('images/bg.png') center center/cover no-repeat fixed;
+            animation: movePanorama 30s linear infinite;
+            color: white;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+            text-shadow: 2px 2px 6px black, 0 0 8px lime;
+            font-size: 32px;
+        }
+
+        .form-box,
+        .code-list {
+            max-width: 540px;
+            margin: auto;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px #00ff00aa, 0 0 24px #00ff0055;
+            margin-bottom: 28px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: inherit;
+            font-size: 16px;
+            border: 2px solid #33ff33;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #00ffcc;
+            box-shadow: 0 0 5px #00ffcc88;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: inherit;
+            font-size: 16px;
+            background-image: url('images/button.png');
+            background-size: cover;
+            color: white;
+            text-shadow: 1px 1px 3px black;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s;
+        }
+
+        button:hover {
+            box-shadow: 0 0 10px #00ff00bb;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 15px;
+        }
+
+        th,
+        td {
+            border: 1px solid #33ff33;
+            padding: 8px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 4px;
+            text-shadow: 1px 1px black;
+        }
+
+        th {
+            background: rgba(0, 128, 0, 0.4);
+            font-weight: bold;
+        }
+
+        #message {
+            margin-top: 12px;
+            text-align: center;
+            color: lime;
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 0 0 5px black;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+    <h1>🎁 Reward Code Admin Panel</h1>
+    <div class="form-box">
+        <input id="codeId" placeholder="Enter Code ID (e.g. EID2025)" />
+        <select id="rewardType">
+            <option value="emeralds">Emeralds</option>
+            <option value="skin">Skin</option>
+        </select>
+        <input id="rewardValue" placeholder="Reward Value (number or skin ID)" />
+        <input id="maxUses" type="number" placeholder="Max Uses (optional)" />
+        <input id="expiresAt" type="datetime-local" />
+        <textarea id="notes" placeholder="Notes (optional)"></textarea>
+        <button onclick="createCode()">Create / Update Code</button>
+        <div id="message"></div>
+    </div>
+    <div class="code-list">
+        <h3>Existing Codes</h3>
+        <table id="codeTable">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Reward</th>
+                    <th>Uses</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function showMsg(msg, color = 'lime') {
+            const m = document.getElementById("message");
+            m.textContent = msg;
+            m.style.color = color;
+        }
+
+        function createCode() {
+            const id = document.getElementById("codeId").value.trim();
+            const type = document.getElementById("rewardType").value;
+            const val = document.getElementById("rewardValue").value.trim();
+            const uses = parseInt(document.getElementById("maxUses").value);
+            const exp = document.getElementById("expiresAt").value;
+            const notes = document.getElementById("notes").value.trim();
+
+            if (!id || !val) return showMsg("Fill required fields!", "red");
+
+            const doc = {
+                rewardType: type,
+                rewardValue: type === "emeralds" ? parseInt(val) : val,
+                usedBy: [],
+                createdBy: auth.currentUser.uid,
+                notes
+            };
+            if (uses) doc.maxUses = uses;
+            if (exp) doc.expiresAt = new Date(exp).toISOString();
+
+            db.collection("codes").doc(id).set(doc).then(() => {
+                showMsg("✅ Code Saved!");
+                loadCodes();
+            }).catch(e => showMsg("❌ Error: " + e.message, "red"));
+        }
+
+        function loadCodes() {
+            db.collection("codes").get().then(snapshot => {
+                const tbody = document.querySelector("#codeTable tbody");
+                tbody.innerHTML = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+            <td>${doc.id}</td>
+            <td>${data.rewardType === "emeralds" ? data.rewardValue + '💎' : '🎭 ' + data.rewardValue}</td>
+            <td>${data.usedBy.length}${data.maxUses ? "/" + data.maxUses : ""}</td>
+            <td>
+              <button onclick="fillEdit('${doc.id}')">Edit</button>
+              <button onclick="deleteCode('${doc.id}')">Delete</button>
+            </td>`;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function fillEdit(id) {
+            db.collection("codes").doc(id).get().then(doc => {
+                if (!doc.exists) return;
+                const data = doc.data();
+                document.getElementById("codeId").value = id;
+                document.getElementById("rewardType").value = data.rewardType;
+                document.getElementById("rewardValue").value = data.rewardValue;
+                document.getElementById("maxUses").value = data.maxUses || "";
+                document.getElementById("notes").value = data.notes || "";
+                document.getElementById("expiresAt").value = data.expiresAt ? new Date(data.expiresAt).toISOString().slice(0, 16) : "";
+                showMsg("Loaded for editing", "yellow");
+            });
+        }
+
+        function deleteCode(id) {
+            if (confirm("Delete code " + id + "?")) {
+                db.collection("codes").doc(id).delete().then(() => {
+                    showMsg("Deleted code: " + id);
+                    loadCodes();
+                });
+            }
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (!user) return location.href = "login.html";
+            db.collection("users").doc(user.uid).get().then(doc => {
+                if (!doc.exists || doc.data().rank !== "Owner") {
+                    alert("Access denied.");
+                    location.href = "index.html";
+                } else {
+                    loadCodes();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

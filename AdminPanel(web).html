@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <!-- Prevent pinch/double-tap zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Admin Panel — Owner Only</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-…" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        /*——————————————————
+      1. Custom Properties (CSS Variables)
+    ——————————————————*/
+        :root {
+            --clr-blue-light: #55aaff;
+            --clr-blue-dark: #3399ff;
+            --clr-purple-light: #9c27b0;
+            --clr-purple-dark: #673ab7;
+            --clr-green: #55cc55;
+            --clr-gold: #ffcc00;
+            --clr-red-light: #ff5555;
+            --clr-red-dark: #ff3333;
+            --clr-bg-gradient-start: #0f2027;
+            --clr-bg-gradient-mid: #203a43;
+            --clr-bg-gradient-end: #2c5364;
+            --clr-card-bg: rgba(20, 20, 36, 0.7);
+            --clr-glass-bg: rgba(30, 30, 46, 0.8);
+            --clr-glass-blur: blur(10px);
+            --ff-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --fs-base: 1rem;
+            --fs-small: 0.85rem;
+            --border-radius: 8px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 20px;
+            --transition-fast: 0.2s ease;
+            --transition-medium: 0.3s ease;
+            --shadow-light: 0 4px 15px rgba(85, 170, 255, 0.3);
+            --shadow-dark: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --shadow-active: 0 6px 20px rgba(85, 170, 255, 0.5);
+        }
+
+        /*——————————————————
+      0. Browser “Artifact” Fixes + Global Reset
+    ——————————————————*/
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--ff-base);
+            font-size: var(--fs-base);
+
+            /* Prevent tap highlights & selection */
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            overscroll-behavior-y: contain;
+            /* block overscroll glow/bounce */
+            touch-action: pan-y;
+            /* allow vertical scroll only */
+
+            /* Combined body styling */
+            background: linear-gradient(135deg,
+                    var(--clr-bg-gradient-start),
+                    var(--clr-bg-gradient-mid),
+                    var(--clr-bg-gradient-end));
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: var(--spacing-lg);
+            position: relative;
+            line-height: 1;
+        }
+
+        /* Radial highlights */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(22, 160, 133, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(155, 60, 183, 0.1) 0%, transparent 20%);
+            z-index: -1;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /*——————————————————
+      2. Prevent Image Dragging & Selection
+    ——————————————————*/
+        img,
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            pointer-events: none;
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+
+        /*——————————————————
+      3. Focus Outline Removal (Optional)
+    ——————————————————*/
+        button:focus,
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+        }
+
+        /*——————————————————
+      4. Prevent Zoom on Certain Elements
+    ——————————————————*/
+        input,
+        button,
+        a,
+        textarea {
+            touch-action: manipulation;
+            /* disables pinch & double-tap zoom */
+        }
+
+        /*——————————————————
+      5. Header Styles
+    ——————————————————*/
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            border-bottom: 1px solid rgba(85, 170, 255, 0.3);
+        }
+
+        .header h1 {
+            color: var(--clr-blue-light);
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(85, 170, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            user-select: none;
+        }
+
+        .header h1 i {
+            color: var(--clr-gold);
+            font-size: 1.5rem;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .header-buttons button {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-md);
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            color: white;
+            box-shadow: var(--shadow-light);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            user-select: none;
+        }
+
+        #refreshBtn {
+            background: linear-gradient(to right, var(--clr-blue-light), var(--clr-blue-dark));
+        }
+
+        #refreshBtn:active {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-active);
+        }
+
+        #logoutBtn {
+            background: linear-gradient(to right, var(--clr-red-light), var(--clr-red-dark));
+        }
+
+        #logoutBtn:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 85, 85, 0.5);
+        }
+
+        /*——————————————————
+      6. Stats Bar Styles
+    ——————————————————*/
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: var(--clr-glass-bg);
+            padding: var(--spacing-md);
+            border-radius: 12px;
+            margin-bottom: var(--spacing-lg);
+            backdrop-filter: var(--clr-glass-blur);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card {
+            flex: 1;
+            margin: 0 var(--spacing-sm);
+            text-align: center;
+            padding: var(--spacing-sm);
+            background: var(--clr-card-bg);
+            border-radius: 10px;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            user-select: none;
+        }
+
+        .stat-card:first-child {
+            margin-left: 0;
+        }
+
+        .stat-card:last-child {
+            margin-right: 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .stat-card h3 {
+            color: var(--clr-blue-light);
+            margin-bottom: var(--spacing-xs);
+            font-size: var(--fs-small);
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--clr-gold);
+        }
+
+        /*——————————————————
+      7. Search Bar Styles
+    ——————————————————*/
+        .search-bar {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: none;
+            border-radius: var(--border-radius);
+            background: var(--clr-glass-bg);
+            color: #e0e0e0;
+            font-size: var(--fs-base);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: var(--clr-glass-blur);
+            -webkit-user-select: text;
+            /* allow selection in inputs */
+            user-select: text;
+        }
+
+        .search-bar input::placeholder {
+            color: #aaa;
+        }
+
+        .search-bar button {
+            padding: var(--spacing-sm) var(--spacing-xl, 25px);
+            border: none;
+            border-radius: var(--border-radius);
+            background: linear-gradient(to right, var(--clr-purple-light), var(--clr-purple-dark));
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(155, 60, 183, 0.3);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            user-select: none;
+        }
+
+        .search-bar button:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(155, 60, 183, 0.5);
+        }
+
+        /*——————————————————
+      8. Loading Indicator
+    ——————————————————*/
+        #loading {
+            text-align: center;
+            padding: var(--spacing-lg);
+            font-size: 1.2rem;
+            color: var(--clr-blue-light);
+            background: var(--clr-glass-bg);
+            border-radius: 10px;
+            margin-bottom: var(--spacing-lg);
+            backdrop-filter: var(--clr-glass-blur);
+            user-select: none;
+        }
+
+        /*——————————————————
+      9. Users Grid & Cards
+    ——————————————————*/
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .user-card {
+            position: relative;
+            background: linear-gradient(145deg, rgba(30, 30, 46, 0.9), rgba(20, 20, 36, 0.9));
+            border: 1px solid rgba(85, 170, 255, 0.15);
+            padding: var(--spacing-lg);
+            border-radius: 15px;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+            box-shadow: var(--shadow-dark);
+            backdrop-filter: var(--clr-glass-blur);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-color: rgba(85, 170, 255, 0.3);
+        }
+
+        .user-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--clr-blue-light), var(--clr-blue-dark));
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-header img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(85, 170, 255, 0.5);
+            margin-right: var(--spacing-lg);
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-info h2 {
+            color: var(--clr-blue-light);
+            font-size: var(--fs-base);
+            margin-bottom: var(--spacing-xs);
+            user-select: none;
+        }
+
+        .user-info .rank {
+            display: inline-block;
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: 20px;
+            font-size: var(--fs-small);
+            font-weight: 600;
+            margin-top: var(--spacing-xs);
+            user-select: none;
+        }
+
+        /* Role Badge Variants */
+        .owner {
+            background: rgba(255, 0, 0, 0.2);
+            color: var(--clr-red-light);
+            border: 1px solid var(--clr-red-light);
+        }
+
+        .vip {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffda00;
+            border: 1px solid #ffda00;
+        }
+
+        .player {
+            background: rgba(65, 105, 225, 0.2);
+            color: var(--clr-blue-light);
+            border: 1px solid var(--clr-blue-light);
+        }
+
+        .banned {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            text-decoration: line-through;
+            font-style: italic;
+        }
+
+        /* Form Groups Inside Card */
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-weight: 600;
+            color: #aaa;
+            font-size: var(--fs-small);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid rgba(85, 170, 255, 0.3);
+            background: rgba(15, 15, 25, 0.7);
+            color: #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: var(--fs-base);
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--clr-blue-light);
+            box-shadow: 0 0 0 3px rgba(85, 170, 255, 0.2);
+        }
+
+        .created-at {
+            background: rgba(10, 10, 20, 0.7);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            margin: var(--spacing-md) 0;
+            font-size: var(--fs-small);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            user-select: none;
+        }
+
+        .created-at i {
+            color: var(--clr-blue-light);
+        }
+
+        /* Buttons Inside Card */
+        .user-card button {
+            width: 100%;
+            padding: var(--spacing-sm) 0;
+            font-weight: 700;
+            color: #111;
+            border: none;
+            border-radius: var(--border-radius);
+            background: linear-gradient(to right, var(--clr-blue-light), var(--clr-blue-dark));
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+            margin-top: var(--spacing-md);
+            user-select: none;
+        }
+
+        .user-card button:hover {
+            background: linear-gradient(to right, var(--clr-blue-dark), #2277ee);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(85, 170, 255, 0.4);
+        }
+
+        /* Specific Action Buttons */
+        .ban-btn,
+        .reset-btn {
+            all: unset;
+            display: inline-block;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            text-align: center;
+            user-select: none;
+            font-family: inherit;
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Ban button */
+        .ban-btn {
+            background: linear-gradient(to right, #ff4d4d, #ff0000) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+        }
+
+        .ban-btn:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.5);
+        }
+
+        /* Reset button */
+        .reset-btn {
+            background: linear-gradient(to right, #ffcc66, #ff9900) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3);
+        }
+
+        .reset-btn:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 165, 0, 0.5);
+        }
+
+        /* Card Actions (Ban/Reset) Wrapper */
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: var(--spacing-lg) 0;
+            color: #777;
+            font-size: var(--fs-small);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: var(--spacing-lg);
+            user-select: none;
+        }
+
+        /*——————————————————
+      10. Responsive Adjustments
+    ——————————————————*/
+        @media (max-width: 1024px) {
+            .stats-bar {
+                flex-wrap: wrap;
+                gap: var(--spacing-md);
+            }
+
+            .stat-card {
+                flex: 1 1 calc(50% - var(--spacing-md));
+                margin: var(--spacing-sm) 0;
+            }
+
+            .user-card {
+                padding: var(--spacing-md);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: var(--spacing-lg);
+            }
+
+            .header-buttons {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .stat-card {
+                flex: 1 1 100%;
+                margin: var(--spacing-sm) 0;
+            }
+
+            .users-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card-header img {
+                width: 64px;
+                height: 64px;
+            }
+
+            .card-header h2 {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!--————————————
+    HEADER
+  ————————————-->
+    <div class="header">
+        <h1 aria-label="Admin Panel — Owner Only">
+            <i class="fas fa-user-shield" aria-hidden="true"></i>
+            Admin Panel — Owner Only
+        </h1>
+        <div class="header-buttons">
+            <button id="refreshBtn" aria-label="Refresh Data">
+                <i class="fas fa-sync-alt" aria-hidden="true"></i> Refresh
+            </button>
+            <button id="logoutBtn" aria-label="Logout">
+                <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <!--————————————
+    STATS BAR
+    (Second card shows Total Highscore)
+  ————————————-->
+    <div class="stats-bar" role="region" aria-label="Statistics">
+        <div class="stat-card" aria-label="Total Users">
+            <h3>Total Users</h3>
+            <div class="value" id="totalUsers">--</div>
+        </div>
+        <div class="stat-card" aria-label="Total Highscore">
+            <h3>Total Highscore</h3>
+            <div class="value" id="totalHighscore">--</div>
+        </div>
+        <div class="stat-card" aria-label="Emeralds in System">
+            <h3>Emeralds in System</h3>
+            <div class="value" id="totalEmeralds">--</div>
+        </div>
+    </div>
+
+    <!--————————————
+    SEARCH BAR
+  ————————————-->
+    <div class="search-bar" role="search">
+        <input type="text" id="searchInput" placeholder="Search by Username, ID, or Rank" aria-label="Search users by username, ID, or rank" />
+        <button id="searchBtn" aria-label="Execute Search">
+            <i class="fas fa-search" aria-hidden="true"></i> Search
+        </button>
+    </div>
+
+    <!--————————————
+    LOADING INDICATOR
+  ————————————-->
+    <div id="loading" role="status" aria-live="polite">Loading user data...</div>
+
+    <!--————————————
+    USERS GRID (Container for dynamic cards)
+  ————————————-->
+    <div class="users-grid" id="usersContainer" aria-live="polite"></div>
+
+    <!--————————————
+    FOOTER
+  ————————————-->
+    <div class="footer">
+        <p>© 2025 Admin Panel v2.0 | Secure Access Only | Last updated: May 31, 2025</p>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ——— Firebase Initialization ———
+            const firebaseConfig = {
+                apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+                authDomain: "craftsprintio.firebaseapp.com",
+                projectId: "craftsprintio",
+                storageBucket: "craftsprintio.appspot.com",
+                messagingSenderId: "51453864626",
+                appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+                measurementId: "G-MFH20CF27R"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            // ——— Cached Element References ———
+            const usersContainer = document.getElementById('usersContainer');
+            const totalUsersElem = document.getElementById('totalUsers');
+            const totalHighscoreElem = document.getElementById('totalHighscore');
+            const totalEmeraldsElem = document.getElementById('totalEmeralds');
+            const loadingElem = document.getElementById('loading');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+
+            let allUsers = []; // Will store fetched user objects
+
+            // ——— Helper: Format Firestore Timestamp to Local String ———
+            function formatDate(ts) {
+                if (!ts || !ts.toDate) return 'Unknown';
+                return ts.toDate().toLocaleString('en-GB', {
+                    hour12: false,
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // ——— Helper: Convert Rank to Lowercase CSS Class ———
+            function getRankClass(rank) {
+                if (!rank || rank === 'Player') return 'player';
+                if (rank === 'VIP') return 'vip';
+                if (rank === 'Owner') return 'owner';
+                return 'player'; // fallback
+            }
+
+            // ——— Render All Users into Cards ———
+            function renderUsers(users) {
+                usersContainer.innerHTML = ''; // Clear container
+                if (users.length === 0) {
+                    usersContainer.innerHTML = '<p style="text-align:center; color: #aaa;">No users found.</p>';
+                    return;
+                }
+
+                users.forEach(user => {
+                    // Create card container
+                    const card = document.createElement('div');
+                    card.className = 'user-card';
+
+                    // Build inner HTML
+                    card.innerHTML = `
+            <div class="card-header">
+              <img
+                src="${user.profilePicUrl || 'https://via.placeholder.com/80'}"
+                alt="Profile picture of ${user.username || 'Unknown'}"
+              />
+              <div class="user-info">
+                <h2>${user.username || 'Unnamed'}</h2>
+                <span class="rank ${getRankClass(user.rank)}">
+                  ${user.rank || 'Player'}
+                </span>
+              </div>
+            </div>
+
+            <div class="created-at" aria-label="Account created at ${formatDate(user.createdAt)}">
+              <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+              Created: ${formatDate(user.createdAt)}
+            </div>
+
+            <!-- Editable Fields -->
+            <div class="form-group">
+              <label for="username-${user.id}">Username</label>
+              <input type="text" id="username-${user.id}" value="${user.username}" />
+            </div>
+            <div class="form-group">
+              <label for="pfp-${user.id}">Profile Pic URL</label>
+              <input type="url" id="pfp-${user.id}" value="${user.profilePicUrl}" />
+            </div>
+            <div class="form-group">
+              <label for="rank-${user.id}">Rank</label>
+              <select id="rank-${user.id}">
+                <option value="Owner" ${user.rank === 'Owner' ? 'selected' : ''}>Owner</option>
+                <option value="VIP" ${user.rank === 'VIP' ? 'selected' : ''}>VIP</option>
+                <option value="Player" ${!user.rank || user.rank === 'Player' ? 'selected' : ''}>Player</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="highscore-${user.id}">Highscore</label>
+              <input type="number" id="highscore-${user.id}" value="${user.highscore || 0}" min="0" />
+            </div>
+            <div class="form-group">
+              <label for="emeralds-${user.id}">Emeralds</label>
+              <input type="number" id="emeralds-${user.id}" value="${user.emeralds || 0}" min="0" />
+            </div>
+
+            <!-- Action Buttons -->
+            <button class="saveBtn" aria-label="Save changes for ${user.username}">
+              <i class="fas fa-save" aria-hidden="true"></i> Save Changes
+            </button>
+
+            <div class="card-actions">
+              <button class="ban-btn" aria-label="Ban ${user.username}">
+                <i class="fas fa-ban" aria-hidden="true"></i> Ban
+              </button>
+              <button class="reset-btn" aria-label="Reset ${user.username}">
+                <i class="fas fa-undo" aria-hidden="true"></i> Reset
+              </button>
+            </div>
+          `;
+
+                    // Live preview: change avatar when URL input changes
+                    const pfpInput = card.querySelector(`#pfp-${user.id}`);
+                    const imgElem = card.querySelector('img');
+                    pfpInput.addEventListener('input', () => {
+                        imgElem.src = pfpInput.value || 'https://via.placeholder.com/80';
+                    });
+
+                    // Save button logic
+                    card.querySelector('.saveBtn').addEventListener('click', async () => {
+                        const updatedData = {
+                            username: document.getElementById(`username-${user.id}`).value.trim(),
+                            profilePicUrl: document.getElementById(`pfp-${user.id}`).value.trim(),
+                            rank: document.getElementById(`rank-${user.id}`).value,
+                            highscore: parseInt(document.getElementById(`highscore-${user.id}`).value) || 0,
+                            emeralds: parseInt(document.getElementById(`emeralds-${user.id}`).value) || 0
+                        };
+                        try {
+                            await db.collection('users').doc(user.id).update(updatedData);
+                            alert(`User "${updatedData.username}" updated successfully.`);
+                            fetchUsers(); // Refresh list
+                        } catch (err) {
+                            console.error('Error updating user:', err);
+                            alert('Failed to update user. Check console for details.');
+                        }
+                    });
+
+                    // Ban button logic
+                    card.querySelector('.ban-btn').addEventListener('click', async () => {
+                        if (confirm(`Are you sure you want to ban "${user.username}"?`)) {
+                            try {
+                                await db.collection('users').doc(user.id).update({
+                                    rank: 'Banned'
+                                });
+                                alert(`User "${user.username}" has been banned.`);
+                                fetchUsers();
+                            } catch (err) {
+                                console.error('Error banning user:', err);
+                                alert('Failed to ban user. Check console for details.');
+                            }
+                        }
+                    });
+
+                    // Reset button logic
+                    card.querySelector('.reset-btn').addEventListener('click', async () => {
+                        if (confirm(
+                                `Reset account for "${user.username}"? This will clear emeralds, highscore, and revert rank to "Player".`
+                            )) {
+                            try {
+                                await db.collection('users').doc(user.id).update({
+                                    rank: 'Player',
+                                    highscore: 0,
+                                    emeralds: 0,
+                                    profilePicUrl: ''
+                                });
+                                alert(`User "${user.username}" has been reset.`);
+                                fetchUsers();
+                            } catch (err) {
+                                console.error('Error resetting user:', err);
+                                alert('Failed to reset user. Check console for details.');
+                            }
+                        }
+                    });
+
+                    usersContainer.appendChild(card);
+                });
+            }
+
+            // ——— Fetch All Users from Firestore ———
+            // ——— Fetch All Users from Firestore ———
+            async function fetchUsers() {
+                loadingElem.style.display = 'block';
+                try {
+                    // Instead of ordering by 'createdAt', simply grab every doc in "users"
+                    const snapshot = await db.collection('users').get();
+                    allUsers = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+
+                    // Update stats
+                    totalUsersElem.textContent = allUsers.length;
+
+                    // Calculate total highscore
+                    const highscoreSum = allUsers.reduce((sum, u) => sum + (u.highscore || 0), 0);
+                    totalHighscoreElem.textContent = highscoreSum;
+
+                    // Calculate total emeralds
+                    const emeraldSum = allUsers.reduce((sum, u) => sum + (u.emeralds || 0), 0);
+                    totalEmeraldsElem.textContent = emeraldSum;
+
+                    renderUsers(allUsers);
+                } catch (err) {
+                    console.error('Error fetching users:', err);
+                    usersContainer.innerHTML = '<p style="text-align:center; color:#faa;">Failed to load users.</p>';
+                } finally {
+                    loadingElem.style.display = 'none';
+                }
+            }
+
+            // ——— Search Functionality ———
+            searchBtn.addEventListener('click', () => {
+                const term = searchInput.value.trim().toLowerCase();
+                if (term === '') {
+                    renderUsers(allUsers);
+                } else {
+                    const filtered = allUsers.filter(u =>
+                        (u.username || '').toLowerCase().includes(term) ||
+                        (u.id || '').toLowerCase().includes(term) ||
+                        (u.rank || '').toLowerCase().includes(term)
+                    );
+                    renderUsers(filtered);
+                }
+            });
+            // Allow Enter key on input to trigger search
+            searchInput.addEventListener('keypress', e => {
+                if (e.key === 'Enter') searchBtn.click();
+            });
+
+            // ——— Refresh & Logout Buttons ———
+            refreshBtn.addEventListener('click', () => {
+                fetchUsers();
+            });
+            logoutBtn.addEventListener('click', () => {
+                auth.signOut()
+                    .then(() => {
+                        window.location.href = 'login.html';
+                    })
+                    .catch(err => {
+                        console.error('Error during sign-out:', err);
+                        alert('Failed to log out. Check console for details.');
+                    });
+            });
+
+            // ——— Auth State Check ———
+            auth.onAuthStateChanged(currentUser => {
+                if (!currentUser) {
+                    window.location.href = 'login.html';
+                } else {
+                    // Verify rank is Owner
+                    db.collection('users').doc(currentUser.uid).get()
+                        .then(docSnap => {
+                            if (!docSnap.exists || docSnap.data().rank !== 'Owner') {
+                                window.location.href = 'unauthorized.html';
+                            } else {
+                                // Fetch and render
+                                fetchUsers();
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error verifying owner access:', err);
+                            window.location.href = 'unauthorized.html';
+                        });
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

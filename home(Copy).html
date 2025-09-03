@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Home | CRAFTRUNNER.IO</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,maximum-scale=1.0">
+    <link rel="icon" type="image/png" href="images/favicon.png">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+    <!-- Game Config & Logic -->
+    <script src="home.js" defer></script>
+    <script src="home1.js" defer></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="home.css">
+
+    <!-- Babylon & Assets -->
+    <script src="skins.js" defer></script>
+    <script src="splashes.js" defer></script>
+    <script src="js/babylon.js" defer></script>
+    <script src="js/babylonjs.loaders.min.js" defer></script>
+</head>
+
+<body>
+    <div class="panorama" id="panorama"></div>
+
+    <div id="loadingScreen">
+        <img src="images/loading.gif" alt="Loading…">
+        <h1>Loading…</h1>
+    </div>
+
+    <div class="container" id="mainMenu" style="display:none">
+        <img src="images/logo.png" class="logo" alt="Logo">
+        <div class="splash" id="splashText"></div>
+
+        <div class="menu">
+            <button class="button" onclick="location.href='ds.html'">Game</button>
+            <button class="button" onclick="location.href='shop.html'">Shop</button>
+            <button class="button" onclick="location.href='settings.html'">Settings</button>
+            <button class="button" onclick="location.href='about.html'">About</button>
+        </div>
+
+        <div id="vipWelcomeReward" style="display:none">
+            <button class="button" onclick="claimVipWelcomeReward()">🎁 Claim VIP Welcome Reward</button>
+        </div>
+
+        <div id="vipBuyBtn" onclick="location.href='buyvip.html'" style="display:none"></div>
+
+        <div class="preview">
+            <div class="player-name" id="playerName">Steve</div>
+            <div class="player-preview"><canvas id="playerCanvas"></canvas></div>
+            <button class="button small-button" onclick="location.href='dressing_room.html'">Dressing Room</button>
+        </div>
+
+        <div class="profile-container">
+            <div class="profile-text">Profile</div>
+            <div class="profile-icon" onclick="location.href='profile.html'" aria-label="Open Profile"></div>
+        </div>
+    </div>
+
+    <div class="version" id="versionText"></div>
+    <div class="credit" id="creditText"></div>
+</body>
+
+</html>

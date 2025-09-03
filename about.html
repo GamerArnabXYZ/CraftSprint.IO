@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+<link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="icon" href="images/favicon.png" />
+  <title>About - CRAFTRUNNER.IO</title>
+  <style>
+    @font-face {
+      font-family: 'Minecraft';
+      src: url('fonts/Minecraft.ttf');
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100vh;
+      font-family: 'Minecraft', sans-serif;
+      overflow: hidden;
+      user-select: none;
+      color: white;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #panorama {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: url('images/bg.png') no-repeat center center/cover;
+      filter: blur(40%);
+      animation: movePanorama 30s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes movePanorama {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    #aboutImg {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 20px auto 10px;
+      display: block;
+      image-rendering: pixelated;
+      cursor: pointer;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 10px;
+    }
+
+    .content p {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    #subscribe-text {
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    #youtube-icon {
+      display: block;
+      width: 50px;
+      margin: 10px auto;
+      cursor: pointer;
+      -webkit-user-drag: none;
+    }
+
+    #back-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: transform 0.1s ease;
+      background-image: url('images/button.png');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      width: 200px;
+      height: 40px;
+      font-size: 16px;
+      color: white;
+      line-height: 40px;
+      text-align: center;
+      -webkit-touch-callout: none;
+    }
+
+    #back-btn:active {
+      transform: translateX(-50%) scale(0.75);
+    }
+
+    /* Modal Popup */
+    #popupModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modalContent {
+      background: #111;
+      padding: 24px;
+      border: 3px solid white;
+      border-radius: 12px;
+      width: 88%;
+      max-width: 320px;
+      text-align: center;
+      color: white;
+      font-family: 'Minecraft';
+      box-shadow: 0 0 15px black;
+      background-image: url('images/button.png');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      animation: popupBounce 0.4s ease;
+    }
+
+    @keyframes popupBounce {
+      0% { transform: scale(0.7); opacity: 0; }
+      60% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    .modalContent h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: yellow;
+      text-shadow: 1px 1px black;
+    }
+
+    .modalContent p {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .modalContent button {
+      padding: 8px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      font-size: 14px;
+      border-radius: 6px;
+      font-family: 'Minecraft';
+      box-shadow: 0 0 5px #000;
+      transition: transform 0.1s ease;
+      margin: 5px;
+    }
+
+    .modalContent button:hover {
+      background: #45a049;
+    }
+
+    .modalContent button:active {
+      transform: scale(0.85);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="panorama"></div>
+
+  <div class="container">
+    <img src="images/about.png" alt="About Image" id="aboutImg" />
+    <h1>About This Game</h1>
+    <div class="content">
+      <p>Welcome to <strong>MC Run</strong> — a pixel-packed adventure where Steve sprints, TNT explodes, and danger awaits at every block!</p>
+      <p>Dodge TNTs by day, survive zombie ambushes by night, and collect emeralds to prove you're the ultimate runner.</p>
+      <p>From blocky landscapes to an authentic Minecraft vibe, this game brings you endless fun and classic nostalgia.</p>
+      <p>Crafted with care by <strong>Gamer Arnab XYZ</strong>, just for fans like you!</p>
+      <p id="subscribe-text">Feeling awesome? Smash that YouTube button and support the creator!</p>
+    </div>
+    <img src="images/youtube.png" alt="YouTube" id="youtube-icon" onclick="location.href='vnd.youtube://www.youtube.com/@Gamer_Arnab_XYZ?sub_confirmation=1'" />
+  </div>
+
+  <div id="back-btn" onclick="location.href='index.html'">Back to Home</div>
+
+  <!-- Secret Popup Modal -->
+  <div id="popupModal">
+    <div class="modalContent">
+      <h2 id="popupTitle">Secret Found!</h2>
+      <p id="popupMessage">You Discovered a Secret and Mysterious Something<br>Do You Want To See It?</p>
+      <button onclick="yesAction()">Yes</button>
+      <button onclick="noAction()">No</button>
+    </div>
+  </div>
+
+  <script>
+    let clickCount = 0;
+
+    document.getElementById("aboutImg").addEventListener("click", function () {
+      clickCount++;
+      if (clickCount === 7) {
+        showModal();
+        clickCount = 0;
+      }
+    });
+
+    function showModal() {
+      document.getElementById("popupModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("popupModal").style.display = "none";
+    }
+
+    function yesAction() {
+      // Redirect to secret.html
+      window.location.href = 'secret.html';
+    }
+
+    function noAction() {
+      closeModal(); // Simply close the modal without redirecting
+    }
+  </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('Service Worker error:', err));
+  }
+</script>
+</body>
+</html>

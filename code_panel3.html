@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Reward Code Admin Panel | CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="images/favicon.png" />
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft', sans-serif;
+
+            /* Disable text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            /* Disable iOS callout on long press */
+            -webkit-touch-callout: none;
+
+            /* Disable tap highlight (the blue overlay) */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            overflow-x: hidden;
+            background: transparent;
+            font-family: 'Minecraft', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            touch-action: manipulation;
+            height: 100vh;
+            width: 100vw;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .panorama {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: url('images/bg.png') center center / cover no-repeat;
+            animation: movePanorama 40s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+            text-shadow: 2px 2px 6px black, 0 0 8px lime;
+            font-size: 32px;
+        }
+
+        .form-box,
+        .code-list {
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #44ff44;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 0 20px lime;
+            animation: glow 1.5s infinite alternate;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin-top: 12vh;
+        }
+
+        .code-list {
+            max-width: 360px;
+            width: 95%;
+            //  overflow-x: auto;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 90%;
+            padding: 6px;
+            font-family: 'Minecraft';
+            border-radius: 6px;
+            font-size: 12px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            margin-bottom: 8px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 6px #44ff44;
+            outline: none;
+        }
+
+        button {
+            width: 40vw;
+            max-width: 260px;
+            height: 40px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            border: none;
+            font-family: 'Minecraft';
+            font-size: 12px;
+            color: white;
+            text-shadow: 1px 1px black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background-color: transparent;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px lime;
+        }
+
+        button:active {
+            transform: scale(0.88);
+            box-shadow: 0 0 6px #00ff00;
+        }
+
+        .small-button {
+            width: 10vw;
+            max-width: 260px;
+            height: 20px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            border: none;
+            font-family: 'Minecraft';
+            font-size: 7px;
+            color: white;
+            text-shadow: 1px 1px black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background-color: transparent;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        .small-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px lime;
+        }
+
+        .small-button:active {
+            transform: scale(0.88);
+            box-shadow: 0 0 6px #00ff00;
+        }
+
+        table {
+            width: 100%;
+            font-size: 8px;
+            border-collapse: collapse;
+            margin-top: 10px;
+            table-layout: fixed;
+        }
+
+        th,
+        td {
+            border: 1px solid #33ff33;
+            padding: 8px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 4px;
+            text-shadow: 1px 1px black;
+        }
+
+        th {
+            background: rgba(0, 128, 0, 0.4);
+            font-weight: bold;
+        }
+
+        #message {
+            margin-top: 12px;
+            text-align: center;
+            color: lime;
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 0 0 5px black;
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</head>
+
+<div class="panorama"></div>
+
+<body>
+    <h1>🎁 Reward Code Admin Panel</h1>
+
+    <div class="form-box">
+        <input id="codeId" placeholder="Enter Code ID (e.g. EID2025)" />
+        <select id="rewardType">
+            <option value="emeralds">Emeralds</option>
+            <option value="skin">Skin</option>
+        </select>
+        <input id="rewardValue" placeholder="Reward Value (number or skin ID)" />
+        <input id="maxUses" type="number" placeholder="Max Uses (optional)" />
+        <input id="expiresAt" type="datetime-local" />
+        <textarea id="notes" placeholder="Notes (optional)"></textarea>
+        <button onclick="createCode()">Create / Update Code</button>
+        <div id="message"></div>
+    </div>
+
+    <div class="code-list">
+        <h3>Existing Codes</h3>
+        <input id="searchBox" placeholder="Search code..." oninput="filterCodes()" />
+        <div style="margin: 10px 0;">
+            <button onclick="exportCodes()">📤 Export Codes</button>
+            <input type="file" id="importFile" accept=".json" onchange="importCodes(this.files[0])" style="display:none;" />
+            <button onclick="document.getElementById('importFile').click()">📥 Import Codes</button>
+        </div>
+        <table id="codeTable">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Reward</th>
+                    <th>Uses</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let allCodes = [];
+
+        function showMsg(msg, color = 'lime') {
+            const m = document.getElementById("message");
+            m.textContent = msg;
+            m.style.color = color;
+        }
+
+        function clearForm() {
+            ['codeId', 'rewardValue', 'maxUses', 'notes', 'expiresAt'].forEach(id => {
+                document.getElementById(id).value = "";
+            });
+            document.getElementById("rewardType").value = "emeralds";
+        }
+
+        function createCode() {
+            const id = document.getElementById("codeId").value.trim();
+            const type = document.getElementById("rewardType").value;
+            const val = document.getElementById("rewardValue").value.trim();
+            const uses = parseInt(document.getElementById("maxUses").value);
+            const exp = document.getElementById("expiresAt").value;
+            const notes = document.getElementById("notes").value.trim();
+
+            if (!id || !val) return showMsg("Fill required fields!", "red");
+
+            const doc = {
+                rewardType: type,
+                rewardValue: type === "emeralds" ? parseInt(val) : val,
+                usedBy: [],
+                createdBy: auth.currentUser.uid,
+                notes
+            };
+            if (uses) doc.maxUses = uses;
+            if (exp) doc.expiresAt = new Date(exp).toISOString();
+
+            db.collection("codes").doc(id).set(doc).then(() => {
+                showMsg("✅ Code Saved!");
+                clearForm();
+                loadCodes();
+            }).catch(e => showMsg("❌ Error: " + e.message, "red"));
+        }
+
+        function loadCodes() {
+            db.collection("codes").get().then(snapshot => {
+                allCodes = [];
+                snapshot.forEach(doc => {
+                    allCodes.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                renderCodes(allCodes);
+            });
+        }
+
+        function renderCodes(codes) {
+            const tbody = document.querySelector("#codeTable tbody");
+            tbody.innerHTML = "";
+            const now = new Date();
+
+            codes.forEach(code => {
+                const isExpired = code.expiresAt && new Date(code.expiresAt) < now;
+                const isMaxed = code.maxUses && code.usedBy.length >= code.maxUses;
+                const status = isExpired ? "⏰ Expired" : isMaxed ? "🛑 Maxed" : "✅ Active";
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+          <td>${code.id}</td>
+          <td>${code.rewardType === "emeralds" ? code.rewardValue + ' 💎' : '🎭 ' + code.rewardValue}</td>
+          <td>${code.usedBy.length}${code.maxUses ? "/" + code.maxUses : ""}</td>
+          <td>${status}</td>
+          <td>
+            <button class="small-button" onclick="fillEdit('${code.id}')">Edit</button>
+            <button class="small-button" onclick="deleteCode('${code.id}')">Delete</button>
+            <button class="small-button" onclick="copyToClipboard('${code.id}')">Copy</button>
+          </td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterCodes() {
+            const query = document.getElementById("searchBox").value.toLowerCase();
+            const filtered = allCodes.filter(c => c.id.toLowerCase().includes(query));
+            renderCodes(filtered);
+        }
+
+        function fillEdit(id) {
+            db.collection("codes").doc(id).get().then(doc => {
+                if (!doc.exists) return;
+                const data = doc.data();
+                document.getElementById("codeId").value = id;
+                document.getElementById("rewardType").value = data.rewardType;
+                document.getElementById("rewardValue").value = data.rewardValue;
+                document.getElementById("maxUses").value = data.maxUses || "";
+                document.getElementById("notes").value = data.notes || "";
+                document.getElementById("expiresAt").value = data.expiresAt ? new Date(data.expiresAt).toISOString().slice(0, 16) : "";
+                showMsg("Loaded for editing", "yellow");
+            });
+        }
+
+        function deleteCode(id) {
+            if (confirm("Delete code " + id + "?")) {
+                db.collection("codes").doc(id).delete().then(() => {
+                    showMsg("Deleted code: " + id);
+                    clearForm();
+                    loadCodes();
+                });
+            }
+        }
+
+        function exportCodes() {
+            const json = JSON.stringify(allCodes, null, 2);
+            const blob = new Blob([json], {
+                type: "application/json"
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "reward_codes_backup.json";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importCodes(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) return showMsg("Invalid format", "red");
+                    imported.forEach(doc => {
+                        if (doc.id && doc.rewardType && doc.rewardValue != null) {
+                            const data = {
+                                ...doc
+                            };
+                            delete data.id;
+                            db.collection("codes").doc(doc.id).set(data, {
+                                merge: true
+                            });
+                        }
+                    });
+                    showMsg("Importing...");
+                    setTimeout(loadCodes, 1000);
+                } catch {
+                    showMsg("Failed to import file", "red");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => showMsg("Code copied to clipboard!", "lime"));
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (!user) return location.href = "login.html";
+            db.collection("users").doc(user.uid).get().then(doc => {
+                if (!doc.exists || doc.data().rank !== "Owner") {
+                    alert("Access denied.");
+                    location.href = "index.html";
+                } else {
+                    loadCodes();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

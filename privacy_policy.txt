@@ -1,0 +1,10 @@
+Privacy Policy – CraftSprint.IO
+
+We do not collect personal data without your permission.
+
+• Login is done securely via Firebase Authentication.
+• Emerald and skin data is synced only with your account.
+• No third-party ads are shown.
+• We do not sell, trade, or share your data.
+
+Contact: arnabdasdas2010@gmail.com

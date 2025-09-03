@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Code Panel | CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="images/favicon.png" />
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft';
+            user-select: none;
+        }
+
+        body {
+            background: url('images/bg.png') no-repeat center center/cover;
+            animation: movePanorama 30s linear infinite;
+            color: white;
+            text-align: center;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            margin-top: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            font-family: 'Minecraft';
+            padding: 8px;
+            font-size: 14px;
+            width: 180px;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            text-align: center;
+            background: #222;
+            color: white;
+        }
+
+        button {
+            font-family: 'Minecraft';
+            padding: 8px 15px;
+            font-size: 14px;
+            border: none;
+            background: url('images/button.png') no-repeat center center/contain;
+            color: white;
+            cursor: pointer;
+            margin: 5px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .code-card {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .popup {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            display: none;
+            z-index: 999;
+        }
+
+        .popup.green {
+            color: #00ff00;
+        }
+
+        .popup.red {
+            color: #ff4444;
+        }
+
+        .popup.yellow {
+            color: #ffff66;
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Code Panel</h1>
+
+        <div id="ownerSection" style="display:none;">
+            <h3>Create New Code (Owner Only)</h3>
+            <input type="text" id="newCode" placeholder="Code ID" />
+            <input type="text" id="rewardType" placeholder="emeralds / skin" />
+            <input type="number" id="rewardValue" placeholder="Value" />
+            <button onclick="createCode()">Create Code</button>
+        </div>
+
+        <h3>Existing Codes</h3>
+        <div id="codesList"></div>
+    </div>
+
+    <div class="popup" id="popup"></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function showMsg(msg, color = "green") {
+            const popup = document.getElementById("popup");
+            popup.innerText = msg;
+            popup.className = "popup " + color;
+            popup.style.display = "block";
+            setTimeout(() => {
+                popup.style.display = "none";
+            }, 3000);
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) return showMsg("Login required!", "yellow");
+
+            const userSnap = await db.collection("users").doc(user.uid).get();
+            if (!userSnap.exists) return showMsg("User data missing!", "red");
+
+            const userData = userSnap.data();
+            if (userData.rank === "Owner") {
+                document.getElementById("ownerSection").style.display = "block";
+            }
+
+            loadCodes();
+        });
+
+        async function loadCodes() {
+            const codesSnap = await db.collection("codes").get();
+            const codesList = document.getElementById("codesList");
+            codesList.innerHTML = "";
+
+            codesSnap.forEach(doc => {
+                const data = doc.data();
+                const card = document.createElement("div");
+                card.className = "code-card";
+
+                card.innerHTML = `
+                    <b>Code:</b> ${doc.id}<br>
+                    <b>Reward:</b> ${data.rewardType} - ${data.rewardValue}<br>
+                    <b>Used By:</b> ${data.usedBy ? data.usedBy.join(", ") : "None"}<br>
+                    ${auth.currentUser && auth.currentUser.uid && data.rank === "Owner" ? `
+                        <button onclick="deleteCode('${doc.id}')">Delete</button>` : ""}
+                `;
+                codesList.appendChild(card);
+            });
+        }
+
+        async function createCode() {
+            const codeId = document.getElementById("newCode").value.trim();
+            const rewardType = document.getElementById("rewardType").value.trim();
+            const rewardValue = parseInt(document.getElementById("rewardValue").value);
+
+            if (!codeId || !rewardType || isNaN(rewardValue)) return showMsg("Fill all fields!", "yellow");
+
+            try {
+                await db.collection("codes").doc(codeId).set({
+                    rewardType,
+                    rewardValue,
+                    usedBy: []
+                });
+                showMsg("Code created!", "green");
+                loadCodes();
+            } catch (err) {
+                console.error(err);
+                showMsg("Error creating code!", "red");
+            }
+        }
+
+        async function deleteCode(codeId) {
+            try {
+                await db.collection("codes").doc(codeId).delete();
+                showMsg("Code deleted!", "green");
+                loadCodes();
+            } catch (err) {
+                console.error(err);
+                showMsg("Error deleting code!", "red");
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Redeem Code | CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="images/favicon.png" />
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft';
+            user-select: none;
+        }
+
+        body {
+            background: url('images/bg.png') no-repeat center center/cover;
+            animation: movePanorama 30s linear infinite;
+            color: white;
+            text-align: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            position: relative;
+            top: 25vh;
+        }
+
+        input[type="text"] {
+            font-family: 'Minecraft';
+            padding: 10px;
+            font-size: 16px;
+            width: 240px;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+            background: #222;
+            color: white;
+        }
+
+        button {
+            font-family: 'Minecraft';
+            padding: 10px 30px;
+            font-size: 16px;
+            border: none;
+            background: url('images/button.png') no-repeat center center/contain;
+            color: white;
+            cursor: pointer;
+            width: 180px;
+            height: 50px;
+            margin-top: 10px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .popup {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            display: none;
+            z-index: 999;
+        }
+
+        .popup.green {
+            color: #00ff00;
+        }
+
+        .popup.red {
+            color: #ff4444;
+        }
+
+        .popup.yellow {
+            color: #ffff66;
+        }
+    </style>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Redeem Code</h1>
+        <input type="text" id="codeInput" placeholder="Enter exact code" />
+        <br />
+        <button onclick="redeemCode()">Redeem</button>
+    </div>
+    <div class="popup" id="popup"></div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function showMsg(msg, color = "green") {
+            const popup = document.getElementById("popup");
+            popup.innerText = msg;
+            popup.className = "popup " + color;
+            popup.style.display = "block";
+            setTimeout(() => {
+                popup.style.display = "none";
+            }, 3000);
+        }
+
+        async function redeemCode() {
+            const code = document.getElementById("codeInput").value.trim();
+            if (!code) return showMsg("Please enter a code!", "yellow");
+
+            const user = auth.currentUser;
+            if (!user) return showMsg("Please log in to redeem!", "red");
+
+            try {
+                const codeRef = db.collection("codes").doc(code);
+                const userRef = db.collection("users").doc(user.uid);
+
+                await db.runTransaction(async (tx) => {
+                    const codeSnap = await tx.get(codeRef);
+                    if (!codeSnap.exists) throw new Error("invalid-code");
+
+                    const codeData = codeSnap.data();
+                    const usedBy = codeData.usedBy || [];
+                    if (usedBy.includes(user.uid)) throw new Error("already-redeemed");
+
+                    const userSnap = await tx.get(userRef);
+                    if (!userSnap.exists) throw new Error("user-missing");
+                    const userData = userSnap.data();
+
+                    const rewardType = codeData.rewardType;
+                    const rewardValue = codeData.rewardValue;
+
+                    if (rewardType === "emeralds") {
+                        tx.update(userRef, {
+                            emeralds: (userData.emeralds || 0) + rewardValue,
+                            redeemedCodes: [...(userData.redeemedCodes || []), code]
+                        });
+                    } else if (rewardType === "skin") {
+                        const ownedSkins = userData.ownedSkins || [];
+                        if (ownedSkins.includes(rewardValue)) throw new Error("already-skin");
+                        tx.update(userRef, {
+                            ownedSkins: [...ownedSkins, rewardValue],
+                            redeemedCodes: [...(userData.redeemedCodes || []), code]
+                        });
+                    } else {
+                        throw new Error("invalid-reward");
+                    }
+
+                    tx.update(codeRef, {
+                        usedBy: [...usedBy, user.uid]
+                    });
+                });
+
+                showMsg("Redeemed successfully!", "green");
+
+            } catch (err) {
+                console.error(err);
+                if (err.message === "invalid-code") showMsg("Invalid code!", "red");
+                else if (err.message === "already-redeemed") showMsg("Already redeemed!", "yellow");
+                else if (err.message === "already-skin") showMsg("You already own this skin!", "yellow");
+                else showMsg("Error redeeming code!", "red");
+            }
+        }
+
+        // Warn if not logged in
+        auth.onAuthStateChanged(user => {
+            if (!user) showMsg("Login required!", "yellow");
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="images/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shop | CRAFTRUNNER.IO</title>
+
+    <!-- Firebase SDKs (compat for simpler code) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <!-- skins.js -->
+    <script src="skins.js" defer></script>
+
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft';
+            user-select: none;
+        }
+
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: url('images/bg.png') no-repeat center center/cover;
+            animation: movePanorama 30s linear infinite;
+            color: white;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            font-size: 30px;
+            padding: 10px;
+            text-shadow: 1px 1px 3px black;
+        }
+
+        .emerald-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            color: #00ff00;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+            user-select: none;
+        }
+
+        .emerald-counter img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .shop-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            padding: 20px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .skin-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid white;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            color: white;
+            position: relative;
+            box-shadow: 0 0 8px #00ff00aa;
+            user-select: none;
+        }
+
+        .skin-card img {
+            width: 90px;
+            height: 90px;
+            image-rendering: pixelated;
+            border-radius: 6px;
+            border: 1px solid #00ff00aa;
+        }
+
+        .tick-icon,
+        .lock-icon {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 28px !important;
+            height: 28px !important;
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .vip-label {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background-color: gold;
+            color: black;
+            font-weight: bold;
+            padding: 2px 6px;
+            font-size: 12px;
+            border-radius: 6px;
+            user-select: none;
+        }
+
+        .skin-name {
+            margin-top: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px black;
+        }
+
+        .skin-cost {
+            font-size: 14px;
+            margin: 6px 0;
+            color: #ccffcc;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .skin-button {
+            background: url('images/button.png') no-repeat center center/contain;
+            width: 100%;
+            height: 42px;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            user-select: none;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .skin-button:disabled {
+            color: gray;
+            cursor: default;
+            filter: brightness(0.6);
+        }
+
+        .skin-button:active {
+            transform: scale(0.92);
+        }
+
+        .back-button {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: url('images/button.png') no-repeat center center/contain;
+            width: 160px;
+            height: 44px;
+            color: white;
+            font-size: 16px;
+            border: none;
+            transition: transform 0.1s ease;
+            user-select: none;
+            text-shadow: 1px 1px 3px black;
+        }
+
+        .back-button:active {
+            transform: translateX(-50%) scale(0.8);
+        }
+
+        /* Custom alert popup styles */
+        #custom-alert {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #00ff00;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 10000;
+            font-family: 'Minecraft', monospace;
+            color: #00ff00;
+            font-size: 18px;
+            text-align: center;
+            box-shadow: 0 0 15px #00ff00aa;
+            user-select: none;
+            animation: slideDown 0.4s ease forwards;
+            display: none;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>SHOP</header>
+    <div id="loading-overlay" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  color: #00ff00;
+  font-family: 'Minecraft';
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+">
+        Loading Shop...
+    </div>
+    <div class="emerald-counter" aria-label="Emerald count">
+        <img src="images/emerald.png" alt="Emerald" />
+        <span id="emerald-count">0</span>
+    </div>
+
+    <div class="shop-container" id="shop-container" role="list"></div>
+
+    <button class="back-button" onclick="location.href='index.html'">Back to Home</button>
+
+    <!-- Custom Alert Popup -->
+    <div id="custom-alert" role="alert" aria-live="assertive">
+        <p id="custom-alert-message"></p>
+    </div>
+
+    <script>
+        function showCustomAlert(message) {
+            const alertDiv = document.getElementById('custom-alert');
+            const alertMsg = document.getElementById('custom-alert-message');
+            alertMsg.textContent = message;
+            alertDiv.style.display = 'block';
+
+            if (alertDiv.dismissTimeout) clearTimeout(alertDiv.dismissTimeout);
+
+            alertDiv.dismissTimeout = setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const firebaseConfig = {
+                apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+                authDomain: "craftsprintio.firebaseapp.com",
+                projectId: "craftsprintio",
+                storageBucket: "craftsprintio.appspot.com",
+                messagingSenderId: "51453864626",
+                appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+                measurementId: "G-MFH20CF27R"
+            };
+
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            const shopContainer = document.getElementById("shop-container");
+            const emeraldCount = document.getElementById("emerald-count");
+
+            let user = null;
+            let userData = {
+                emeralds: 0,
+                ownedSkins: [],
+                rank: "Player"
+            };
+
+            function loadFromLocalStorage() {
+                const storedEmeralds = localStorage.getItem("cs_emeralds");
+                const storedSkins = localStorage.getItem("cs_ownedSkins");
+                const storedRank = localStorage.getItem("cs_rank");
+
+                if (storedEmeralds !== null) userData.emeralds = parseInt(storedEmeralds);
+                if (storedSkins !== null) userData.ownedSkins = JSON.parse(storedSkins);
+                if (storedRank !== null) userData.rank = storedRank;
+            }
+
+            function saveToAll() {
+                if (user) {
+                    db.collection("users").doc(user.uid).set({
+                        emeralds: userData.emeralds,
+                        ownedSkins: userData.ownedSkins,
+                        rank: userData.rank
+                    }, {
+                        merge: true
+                    }).catch(console.error);
+                }
+
+                localStorage.setItem("cs_emeralds", userData.emeralds);
+                localStorage.setItem("cs_ownedSkins", JSON.stringify(userData.ownedSkins));
+                localStorage.setItem("cs_rank", userData.rank);
+            }
+
+            function updateUI() {
+                emeraldCount.textContent = userData.emeralds;
+                renderSkins();
+
+                // Hide loader
+                const loadingOverlay = document.getElementById("loading-overlay");
+                if (loadingOverlay) loadingOverlay.style.display = "none";
+            }
+
+            function renderSkins() {
+                shopContainer.innerHTML = "";
+                skins.forEach(skin => {
+                    const card = document.createElement("div");
+                    card.className = "skin-card";
+
+                    const img = document.createElement("img");
+                    img.src = skin.image;
+                    img.alt = skin.name;
+                    card.appendChild(img);
+
+                    if (skin.vipOnly) {
+                        const vipLabel = document.createElement("div");
+                        vipLabel.className = "vip-label";
+                        vipLabel.textContent = "VIP";
+                        card.appendChild(vipLabel);
+                    }
+
+                    if (userData.ownedSkins.includes(skin.id)) {
+                        const tick = document.createElement("img");
+                        tick.src = "images/tick.png";
+                        tick.alt = "Owned";
+                        tick.className = "tick-icon";
+                        card.appendChild(tick);
+                    } else if (skin.vipOnly && !["Owner", "VIP"].includes(userData.rank)) {
+                        const lock = document.createElement("img");
+                        lock.src = "images/lock.png";
+                        lock.alt = "VIP Locked";
+                        lock.className = "lock-icon";
+                        card.appendChild(lock);
+                    } else if (userData.emeralds < skin.cost && skin.cost > 0) {
+                        const lock = document.createElement("img");
+                        lock.src = "images/lock.png";
+                        lock.alt = "Locked";
+                        lock.className = "lock-icon";
+                        card.appendChild(lock);
+                    }
+
+                    const name = document.createElement("div");
+                    name.className = "skin-name";
+                    name.textContent = skin.name;
+                    card.appendChild(name);
+
+                    if (!userData.ownedSkins.includes(skin.id)) {
+                        const cost = document.createElement("div");
+                        cost.className = "skin-cost";
+                        cost.textContent = skin.cost === 0 ? "Free" : `Cost: ${skin.cost} Emeralds`;
+                        card.appendChild(cost);
+                    }
+
+                    const button = document.createElement("button");
+                    button.className = "skin-button";
+
+                    if (userData.ownedSkins.includes(skin.id)) {
+                        button.textContent = "Owned";
+                        button.disabled = true;
+                    } else if (skin.vipOnly && !["Owner", "VIP"].includes(userData.rank)) {
+                        button.textContent = "Locked";
+                        button.disabled = true;
+                    } else if (userData.emeralds >= skin.cost) {
+                        button.textContent = "Buy";
+                        button.onclick = () => {
+                            userData.emeralds -= skin.cost;
+                            userData.ownedSkins.push(skin.id);
+                            updateUI();
+                            saveToAll();
+                            showCustomAlert(`You bought ${skin.name}!`);
+                            button.disabled = true; // prevent double-click
+                        };
+                    } else if (skin.cost === 0) {
+                        button.textContent = "Get";
+                        button.onclick = () => {
+                            userData.ownedSkins.push(skin.id);
+                            updateUI();
+                            saveToAll();
+                            showCustomAlert(`You got ${skin.name}!`);
+                            button.disabled = true; // prevent double-click
+                        };
+                    } else {
+                        button.textContent = "Locked";
+                        button.disabled = true;
+                    }
+
+                    card.appendChild(button);
+                    shopContainer.appendChild(card);
+                });
+            }
+
+            loadFromLocalStorage(); // load cached values early
+
+            auth.onAuthStateChanged(u => {
+                if (u) {
+                    user = u;
+                    db.collection("users").doc(user.uid).get().then(doc => {
+                        if (doc.exists) {
+                            const data = doc.data();
+                            userData.emeralds = data.emeralds ?? userData.emeralds;
+                            userData.ownedSkins = data.ownedSkins ?? userData.ownedSkins;
+                            userData.rank = data.rank ?? userData.rank;
+                            saveToAll(); // sync Firestore + localStorage
+                        } else {
+                            userData = {
+                                emeralds: 100,
+                                ownedSkins: ["steve", "alex"],
+                                rank: "Player"
+                            };
+                            saveToAll();
+                        }
+                        updateUI();
+                    }).catch(err => {
+                        console.error(err);
+                        showCustomAlert("Failed to load user data!");
+                    });
+                } else {
+                    showCustomAlert("Please login to access the shop.");
+                    setTimeout(() => location.href = "login.html", 2000);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

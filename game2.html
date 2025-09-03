@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 15px;
+            font-family: Minecraft, sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #distance {
+            position: absolute;
+            top: 20px;
+            right: 10px;
+            color: white;
+            font-size: 15px;
+            font-family: Minecraft, sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #emeralds {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            color: white;
+            font-size: 15px;
+            font-family: Minecraft, sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-family: Minecraft, sans-serif;
+        }
+
+        .button {
+            width: 40vw;
+            max-width: 260px;
+            height: 48px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
+            font-family: 'Minecraft';
+            font-size: 16px;
+            color: white;
+            margin: 0 10px;
+            text-shadow: 1px 1px black;
+            line-height: 42px;
+            text-align: center;
+            transition: transform 0.1s ease;
+            background-color: transparent;
+        }
+
+        .button:active {
+            transform: scale(.85);
+        }
+
+        #offlineStatus {
+            display: none;
+            /* Hidden by default */
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px #000000;
+            font-family: Minecraft, monospace;
+            background-color: transparent;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 10px;
+            pointer-events: none;
+            /* Ensure it doesn't block input */
+        }
+    </style>
+
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <div id="score">Score: 0</div>
+    <div id="distance">Distance: 0 m</div>
+    <div id="emeralds">
+        <img src="images/emerald.png" style="width:24px; vertical-align:middle; margin-right:5px;">
+        <span id="emeraldCount">0</span>
+    </div>
+    <div id="deathScreen" style="display:none; 
+    position:absolute; top:0; left:0; width:100%; height:100%; 
+    background: rgba(150, 0, 0, 0.6); /* dark red, 60% opacity */ text-align:center; z-index:1000; font-family:'Minecraft', sans-serif;">
+
+        <!-- Center container -->
+        <div style="position:relative; top:20%; width:100%;">
+            <!-- "YOU DIED!" -->
+            <h1 id="deathTitle" style="font-size:30px; color:white; margin-bottom:50px; text-shadow:2px 2px 0 #000;">YOU DIED!</h1>
+
+            <!-- Player death message -->
+            <p id="deathMessage" style="font-size:15px; color:white; margin-bottom:30px; text-shadow:1px 1px 0 #000;"></p>
+
+            <!-- Score -->
+            <p id="deathScore" style="font-size:10px; color:yellow; margin-bottom:40px; text-shadow:1px 1px 0 #000;"></p>
+
+            <!-- Buttons side by side -->
+            <div>
+                <button class="button" id="respawnBtn">Respawn</button>
+                <button class="button" id="titleBtn">Title Screen</button>
+            </div>
+        </div>
+    </div>
+    <div id="offlineStatus">
+        <p>You are offline</p>
+        <p>Earned emeralds will not be saved</p>
+    </div>
+    <div id="loading">Loading game assets...</div>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-functions-compat.js"></script>
+
+    <script src="js/babylon.js"></script>
+    <script src="js/babylonjs.loaders.min.js"></script>
+    <script src="game22.js"></script>
+
+    <script>
+        // --- Check if user data exists ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const email = localStorage.getItem("email");
+            const uid = localStorage.getItem("uid");
+
+            // If missing email or uid → redirect to register.html
+            if (!email || !uid) {
+                window.location.replace("register.html");
+                return; // stop running rest of the code
+            }
+
+            // If everything is fine, your game code continues here...
+        });
+    </script>
+
+    <!-- Your Game Canvas -->
+    <canvas id="renderCanvas"></canvas>
+
+
+    <style>
+        #hitboxToggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            padding: 8px 12px;
+            border: 2px solid white;
+            border-radius: 8px;
+            touch-action: manipulation;
+        }
+
+        #hitboxToggle:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+
+</body>
+
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Home | CRAFTRUNNER.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <link rel="icon" type="image/png" href="images/favicon.png">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+    <!-- Home config -->
+    <script src="home.js"></script>
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft', sans-serif;
+
+            /* Disable text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            /* Disable iOS callout on long press */
+            -webkit-touch-callout: none;
+
+            /* Disable tap highlight (the blue overlay) */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent;
+            font-family: 'Minecraft', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .panorama {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-size: cover;
+            background-repeat: no-repeat;
+            z-index: -1;
+            animation: movePanorama 40s linear infinite;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+
+            100% {
+                background-position: 0 50%
+            }
+        }
+
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        #loadingScreen img {
+            width: 80px;
+            height: 80px;
+        }
+
+        #loadingScreen h1 {
+            color: white;
+            margin-top: 15px;
+            font-size: 20px;
+        }
+
+        .container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100%;
+            padding-top: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .logo {
+            width: 60vw;
+            max-width: 280px;
+            image-rendering: pixelated;
+        }
+
+        @media(min-width:768px) {
+            .logo {
+                max-width: 400px;
+            }
+        }
+
+        .splash {
+            font-size: 10px;
+            color: yellow;
+            margin-top: 4px;
+            margin-right: -200px;
+            transform: rotate(-10deg);
+            animation: splashFloat 2s infinite ease-in-out;
+            white-space: nowrap;
+            text-shadow: 2px 2px black;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        @keyframes splashFloat {
+
+            0%,
+            100% {
+                transform: rotate(-10deg) scale(1)
+            }
+
+            50% {
+                transform: rotate(-10deg) scale(1.1)
+            }
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 8vh;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .button {
+            width: 70vw;
+            max-width: 260px;
+            height: 48px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
+            font-family: 'Minecraft';
+            font-size: 18px;
+            color: white;
+            text-shadow: 1px 1px black;
+            line-height: 42px;
+            text-align: center;
+            transition: transform 0.1s ease;
+            background-color: transparent;
+        }
+
+        .button:active {
+            transform: scale(.85);
+        }
+
+        .small-button {
+            width: 130px;
+            height: 32px;
+            font-size: 14px;
+            line-height: 32px;
+        }
+
+        #vipWelcomeReward {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .emerald-rain {
+            position: fixed;
+            top: -50px;
+            width: 24px;
+            height: 24px;
+            z-index: 99;
+            animation: fallEmerald 3s linear forwards;
+            pointer-events: none;
+            image-rendering: pixelated;
+        }
+
+        @keyframes fallEmerald {
+            to {
+                transform: translateY(110vh);
+                opacity: 0;
+            }
+        }
+
+        #vipBuyBtn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 48px;
+            height: 48px;
+            background-image: url('images/buyvip.png');
+            background-size: 100% 100%;
+            border-radius: 50%;
+            border: .1px solid white;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 44px;
+            cursor: pointer;
+            z-index: 20;
+            font-family: 'Minecraft', sans-serif;
+            display: none;
+            animation: pulseVIP 1s infinite;
+        }
+
+        @keyframes pulseVIP {
+
+            0%,
+            100% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.2)
+            }
+        }
+
+        .profile-container {
+            position: fixed;
+            bottom: 10vh;
+            left: 2vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 15;
+            cursor: pointer;
+            font-family: 'Minecraft', monospace;
+            color: white;
+            transition: transform 0.1s ease;
+            width: 50px;
+            /* same width as icon for alignment */
+        }
+
+        .profile-text {
+            font-size: 14px;
+            margin-bottom: 4px;
+            text-align: center;
+            user-select: none;
+            /* Optional: add text shadow for better visibility */
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .profile-icon {
+            width: 50px;
+            height: 50px;
+            background-image: url('images/profile_icon.png');
+            background-size: 100% 100%;
+        }
+
+        .profile-icon:active {
+            transform: scale(0.85);
+        }
+
+        .preview {
+            position: absolute;
+            right: 10px;
+            bottom: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+        }
+
+        @media(min-width:768px) {
+            .preview {
+                right: 20px;
+                bottom: 50px;
+            }
+        }
+
+        @media(min-width:1200px) {
+            .preview {
+                right: 30px;
+                bottom: 70px;
+            }
+        }
+
+        .player-name {
+            font-size: 12px;
+            color: white;
+            margin-bottom: 6px;
+            text-shadow: 1px 1px black;
+            max-width: 120px;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .player-preview {
+            position: absolute;
+            bottom: 80px;
+            right: 5px;
+            width: 120px;
+            height: 140px;
+            border-radius: 8px;
+            overflow: hidden;
+            background-size: 100% 100%;
+        }
+
+        #playerCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .version,
+        .credit {
+            position: absolute;
+            bottom: 5px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .version {
+            left: 10px;
+        }
+
+        .credit {
+            right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="panorama" id="panorama"></div>
+
+    <div id="loadingScreen">
+        <img src="images/loading.gif" alt="Loading…">
+        <h1>Loading…</h1>
+    </div>
+
+    <div class="container" id="mainMenu">
+        <img src="images/logo.png" class="logo" alt="Logo">
+        <div class="splash" id="splashText"></div>
+
+        <div class="menu">
+            <button class="button" onclick="location.href='ds.html'">Game</button>
+            <button class="button" onclick="location.href='shop.html'">Shop</button>
+            <button class="button" onclick="location.href='settings.html'">Settings</button>
+            <button class="button" onclick="location.href='about.html'">About</button>
+        </div>
+
+        <div id="vipWelcomeReward">
+            <button class="button" onclick="claimVipWelcomeReward()">🎁 Claim VIP Welcome Reward</button>
+        </div>
+
+        <div id="vipBuyBtn" onclick="location.href='buyvip.html'"></div>
+
+        <div class="preview">
+            <div class="player-name" id="playerName">Steve</div>
+            <div class="player-preview"><canvas id="playerCanvas"></canvas></div>
+            <button class="button small-button" onclick="location.href='dressing_room.html'">Dressing Room</button>
+        </div>
+
+        <div class="profile-container">
+            <div class="profile-text">Profile</div>
+            <div class="profile-icon" onclick="location.href='profile.html'" aria-label="Open Profile"></div>
+        </div>
+    </div>
+
+    <div class="version" id="versionText"></div>
+    <div class="credit" id="creditText"></div>
+
+    <!-- Babylon & support scripts -->
+    <script src="skins.js"></script>
+    <script src="splashes.js"></script>
+    <script src="js/babylon.js"></script>
+    <script src="js/babylonjs.loaders.min.js"></script>
+
+    <script>
+        // 1. Populate static UI from homeConfig
+        const cfg = window.homeConfig;
+        document.getElementById('panorama').style.backgroundImage = `url('${cfg.panoramas[Math.floor(Math.random()*cfg.panoramas.length)]}')`;
+        document.getElementById('splashText').innerText = cfg.splashTexts[Math.floor(Math.random() * cfg.splashTexts.length)];
+        document.getElementById('versionText').innerText = cfg.version;
+        document.getElementById('creditText').innerText = cfg.creator;
+
+        // 2. Firebase init
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let currentUid = null;
+
+        // 3. VIP reward logic
+        async function checkVipWelcomeReward() {
+            if (!currentUid) return;
+            const doc = await db.collection("users").doc(currentUid).get();
+            if (doc.exists && doc.data().rank === "VIP" && !doc.data().vipWelcomeClaimed) {
+                document.getElementById('vipWelcomeReward').style.display = 'block';
+            }
+        }
+        async function claimVipWelcomeReward() {
+            if (!currentUid) return;
+            const ref = db.collection("users").doc(currentUid);
+            const snap = await ref.get();
+            if (snap.exists && snap.data().rank === 'VIP' && !snap.data().vipWelcomeClaimed) {
+                const newE = (snap.data().emeralds || 0) + 100;
+                await ref.update({
+                    emeralds: newE,
+                    vipWelcomeClaimed: true
+                });
+                localStorage.setItem('emeralds', newE);
+                alert("🎉 Welcome VIP! 100 emeralds added.");
+                document.getElementById('vipWelcomeReward').style.display = 'none';
+                showEmeraldRain(); // 🎉 Emerald rain trigger
+            }
+        }
+
+        function showEmeraldRain(count = 50) {
+            let dropped = 0;
+            const interval = setInterval(() => {
+                const emerald = document.createElement('img');
+                emerald.src = 'images/emerald.png';
+                emerald.className = 'emerald-rain';
+                emerald.style.left = Math.random() * 100 + 'vw';
+                emerald.style.top = '-50px';
+                emerald.style.position = 'fixed';
+                emerald.style.width = '32px';
+                emerald.style.height = '32px';
+                emerald.style.zIndex = 9999;
+                document.body.appendChild(emerald);
+
+                emerald.animate([{
+                        transform: 'translateY(0px)'
+                    },
+                    {
+                        transform: 'translateY(100vh)'
+                    }
+                ], {
+                    duration: Math.random() * 1500 + 2000,
+                    easing: 'ease-in'
+                });
+
+                setTimeout(() => emerald.remove(), 4000);
+
+                dropped++;
+                if (dropped >= count) clearInterval(interval);
+            }, 50); // 50ms delay between drops
+        }
+
+        async function checkVipStatus() {
+            if (!currentUid) return;
+            const doc = await db.collection("users").doc(currentUid).get();
+            if (doc.exists && doc.data().rank !== 'VIP' && doc.data().rank !== 'Owner') {
+                document.getElementById('vipBuyBtn').style.display = 'block';
+            }
+        }
+
+        // 4. Babylon & main logic
+        function autoScaleSplash(el, maxF = window.innerWidth >= 768 ? 16 : 10, minF = 6) {
+            let f = maxF;
+            el.style.fontSize = f + 'px';
+            el.style.whiteSpace = 'normal';
+            setTimeout(() => {
+                const mh = f * 3.2;
+                while ((el.scrollWidth > el.clientWidth || el.scrollHeight > mh) && f > minF) {
+                    f--;
+                    el.style.fontSize = f + 'px';
+                }
+            }, 0);
+        }
+
+        function autoScaleName(el, maxF = 12, minF = 10) {
+            let f = maxF;
+            el.style.fontSize = f + 'px';
+            while (el.scrollWidth > el.clientWidth && f > minF) {
+                f--;
+                el.style.fontSize = f + 'px';
+            }
+        }
+
+        function scaleSplashAndName() {
+            autoScaleSplash(document.getElementById('splashText'));
+            autoScaleName(document.getElementById('playerName'));
+        }
+        window.addEventListener('resize', scaleSplashAndName);
+
+        window.onload = function() {
+            // redirect if not logged in
+            auth.onAuthStateChanged(user => {
+                if (!user) return location.href = 'login.html';
+                currentUid = user.uid;
+                checkVipWelcomeReward();
+                checkVipStatus();
+            });
+
+            // load avatar preview
+            const nm = localStorage.getItem('username') || 'Steve';
+            document.getElementById('playerName').innerText = nm;
+            const skin = localStorage.getItem('equippedSkin') || 'steve';
+            // Babylon boilerplate...
+            const canvas = document.getElementById('playerCanvas');
+            canvas.setAttribute('tabindex', '-1');
+            const engine = new BABYLON.Engine(canvas, true);
+            const scene = new BABYLON.Scene(engine);
+            scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+            scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+            const camera = new BABYLON.ArcRotateCamera('cam', -Math.PI / 2, Math.PI / 2.2, 2.5, new BABYLON.Vector3(0, 1.1, 0), scene);
+            camera.attachControl(canvas, true);
+            camera.panningSensibility = 0;
+            camera.inputs.clear();
+            camera.lowerRadiusLimit = camera.upperRadiusLimit = 2.9;
+            camera.lowerBetaLimit = camera.upperBetaLimit = Math.PI / 2.2;
+            camera.wheelPrecision = 0;
+            camera.inputs.remove(camera.inputs.attached.mousewheel);
+            const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.9;
+            let modelRoot = null,
+                lastX = 0,
+                dragging = false,
+                targetRot = 0;
+            canvas.addEventListener('pointerdown', e => {
+                dragging = true;
+                lastX = e.clientX;
+            });
+            canvas.addEventListener('pointerup', () => dragging = false);
+            canvas.addEventListener('pointermove', e => {
+                if (!dragging || !modelRoot) return;
+                const dx = e.clientX - lastX;
+                lastX = e.clientX;
+                targetRot -= dx * 0.1;
+            });
+            BABYLON.SceneLoader.Append('models/', skin + '.glb', scene, () => {
+                modelRoot = scene.meshes[0];
+                if (modelRoot) {
+                    modelRoot.rotation = new BABYLON.Vector3(0, 0, 0);
+                    modelRoot.scaling = new BABYLON.Vector3(1.4, 1, 1.2);
+                }
+
+                // Fix materials
+                scene.meshes.forEach(m => {
+                    if (m.material && m.material instanceof BABYLON.PBRMaterial) {
+                        m.material.environmentTexture = null;
+                        m.material.metallic = 0;
+                        m.material.roughness = 0.9;
+                        m.material.backFaceCulling = false;
+                    }
+                });
+
+                // Start idle animation safely
+                const idle = scene.getAnimationGroupByName('animation.player.idle');
+                if (idle) idle.start(true);
+
+                // Hide loading screen only when model + animation ready
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainMenu').style.display = 'flex';
+            });
+            engine.runRenderLoop(() => {
+                scene.render();
+                if (modelRoot) modelRoot.rotation.y = BABYLON.Scalar.Lerp(modelRoot.rotation.y, targetRot, 0.1);
+            });
+            window.addEventListener('resize', () => engine.resize());
+            scaleSplashAndName();
+        };
+    </script>
+</body>
+
+</html>

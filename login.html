@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login - CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft', sans-serif;
+
+            /* Disable text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            /* Disable iOS callout on long press */
+            -webkit-touch-callout: none;
+
+            /* Disable tap highlight (the blue overlay) */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            overflow-x: hidden;
+            background: transparent;
+            font-family: 'Minecraft', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            touch-action: manipulation;
+            height: 100vh;
+            width: 100vw;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .panorama {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: url('images/bg.png') center center / cover no-repeat;
+            animation: movePanorama 40s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #44ff44;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 0 20px lime;
+            animation: glow 1.5s infinite alternate;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin-top: 12vh;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 10px lime;
+            }
+
+            to {
+                box-shadow: 0 0 30px lime;
+            }
+        }
+
+        h1 {
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 90%;
+            padding: 6px;
+            font-family: 'Minecraft';
+            border-radius: 6px;
+            font-size: 14px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            margin-bottom: 8px;
+        }
+
+        input:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 6px #44ff44;
+            outline: none;
+        }
+
+        button {
+            width: 40vw;
+            max-width: 260px;
+            height: 40px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            border: none;
+            font-family: 'Minecraft';
+            font-size: 18px;
+            color: white;
+            text-shadow: 1px 1px black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background-color: transparent;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px lime;
+        }
+
+        button:active {
+            transform: scale(0.88);
+            box-shadow: 0 0 6px #00ff00;
+        }
+
+        #error {
+            color: red;
+            margin-top: 10px;
+        }
+
+        #success {
+            color: lime;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script>
+        if (localStorage.getItem("uid") && localStorage.getItem("email")) {
+            window.location.replace("home.html");
+        }
+    </script>
+
+    <div class="panorama"></div>
+
+    <div class="container">
+        <h1>Login to Your Account</h1>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <a href="forgot_password.html" style="color: #00ffff; text-decoration: underline; font-size: 12px;">
+            Forgot Password?
+        </a>
+        </p>
+        <button onclick="login()">Login</button>
+
+        <p style="margin-top: 12px; font-size: 12px; color: #ccc;">
+            Not registered?
+            <a href="register.html" style="color: #00ff00; text-decoration: underline;">
+                Create one!
+            </a>
+        </p>
+
+        <div id="error"></div>
+        <div id="success"></div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('error');
+            const successEl = document.getElementById('success');
+            const btn = document.querySelector("button");
+            errorEl.textContent = "";
+            successEl.textContent = "";
+            btn.disabled = true;
+            btn.textContent = "Please wait...";
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                errorEl.textContent = "Enter a valid email.";
+                btn.disabled = false;
+                btn.textContent = "Login";
+                return;
+            }
+
+            if (!email || !password) {
+                errorEl.textContent = "Please fill in both fields.";
+                btn.disabled = false;
+                btn.textContent = "Login";
+                return;
+            }
+
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const uid = userCredential.user.uid;
+
+                const doc = await db.collection("users").doc(uid).get();
+                if (!doc.exists) {
+                    throw new Error("User data not found!");
+                }
+
+                const userData = doc.data();
+                localStorage.setItem("uid", uid);
+                localStorage.setItem("username", userData.username);
+                localStorage.setItem("email", userData.email);
+                localStorage.setItem("emeralds", userData.emeralds);
+                localStorage.setItem("rank", userData.rank);
+                localStorage.setItem("profilePicUrl", userData.profilePicUrl);
+
+                successEl.textContent = "Login successful!";
+                setTimeout(() => {
+                    window.location.href = "home.html";
+                }, 1500);
+            } catch (err) {
+                errorEl.textContent = err.message;
+                btn.disabled = false;
+                btn.textContent = "Login";
+            }
+        }
+    </script>
+
+</body>
+
+</html>

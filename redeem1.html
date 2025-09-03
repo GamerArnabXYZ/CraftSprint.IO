@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Reward Code Admin Panel | CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="images/favicon.png" />
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft', sans-serif;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: transparent;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+            padding: 15px;
+        }
+
+        .panorama {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: url('images/bg.png') center center / cover no-repeat;
+            animation: movePanorama 40s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+            text-shadow: 2px 2px 6px black, 0 0 8px lime;
+            font-size: 32px;
+        }
+
+        .form-box,
+        .owner-panel {
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #44ff44;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 0 20px lime;
+            animation: glow 1.5s infinite alternate;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin-top: 12vh;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 90%;
+            padding: 6px;
+            font-family: 'Minecraft';
+            border-radius: 6px;
+            font-size: 12px;
+            background: #222;
+            color: white;
+            border: 1px solid #555;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 6px #44ff44;
+            outline: none;
+        }
+
+        button {
+            width: 40vw;
+            max-width: 260px;
+            height: 40px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            border: none;
+            font-family: 'Minecraft';
+            font-size: 12px;
+            color: white;
+            text-shadow: 1px 1px black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background-color: transparent;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px lime;
+        }
+
+        button:active {
+            transform: scale(0.88);
+            box-shadow: 0 0 6px #00ff00;
+        }
+
+        .small-button {
+            width: 10vw;
+            max-width: 260px;
+            height: 20px;
+            font-size: 7px;
+        }
+
+        .popup {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            display: none;
+            z-index: 999;
+        }
+
+        .popup.green {
+            color: #00ff00;
+        }
+
+        .popup.red {
+            color: #ff4444;
+        }
+
+        .popup.yellow {
+            color: #ffff66;
+        }
+
+        .codes-inventory {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .codes-inventory li {
+            list-style: none;
+            background: url('images/button.png') no-repeat center center/contain;
+            width: 120px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px black;
+            border: 2px solid #444;
+            border-radius: 5px;
+            position: relative;
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+        }
+
+        .codes-inventory li button {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: red;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border: 1px solid #800;
+            border-radius: 3px;
+            cursor: pointer;
+            text-shadow: none;
+        }
+
+        .codes-inventory li button:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="panorama"></div>
+    <h1>🎁 Reward Code Admin Panel</h1>
+
+    <div class="form-box" id="loginDiv">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p id="loginMsg"></p>
+    </div>
+
+    <div class="form-box" id="ownerPanel" style="display:none;">
+        <h2>⚡ Admin Panel ⚡</h2>
+        <input type="text" id="newCode" placeholder="Code ID">
+        <input type="number" id="newReward" placeholder="Reward Emeralds">
+        <button onclick="createCode()">Create / Update</button>
+        <p id="createMsg"></p>
+
+        <h3>Existing Codes</h3>
+        <ul class="codes-inventory" id="codesList"></ul>
+    </div>
+
+    <div class="popup" id="popup"></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const loginMsgEl = document.getElementById("loginMsg");
+        const createMsgEl = document.getElementById("createMsg");
+        const ownerPanelEl = document.getElementById("ownerPanel");
+        const codesListEl = document.getElementById("codesList");
+
+        let currentUserId = null;
+        let currentUserRank = null;
+
+        function showPopup(msg, color = "green") {
+            const popup = document.getElementById("popup");
+            popup.innerText = msg;
+            popup.className = "popup " + color;
+            popup.style.display = "block";
+            setTimeout(() => popup.style.display = "none", 3000);
+        }
+
+        async function login(email = null, password = null) {
+            if (!email || !password) {
+                email = document.getElementById('email').value.trim();
+                password = document.getElementById('password').value;
+            }
+            if (!email || !password) {
+                loginMsgEl.textContent = "Fill both fields.";
+                return;
+            }
+
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                localStorage.setItem("autoLoginEmail", email);
+                handleUser(userCredential.user);
+            } catch (err) {
+                console.error(err);
+                loginMsgEl.textContent = "Login error: " + err.message;
+                showPopup("Login failed!", "red");
+            }
+        }
+
+        async function handleUser(user) {
+            currentUserId = user.uid;
+            const userDoc = await db.collection("users").doc(currentUserId).get();
+            if (!userDoc.exists) return;
+            currentUserRank = userDoc.data().rank;
+
+            document.getElementById("loginDiv").style.display = "none";
+            if (currentUserRank === "Owner") {
+                ownerPanelEl.style.display = "flex";
+                loadCodes();
+            }
+            showPopup("Welcome back!", "green");
+        }
+
+        async function createCode() {
+            const code = document.getElementById("newCode").value.trim();
+            const reward = parseInt(document.getElementById("newReward").value);
+            if (!code || !reward || reward <= 0) {
+                createMsgEl.innerText = "Enter valid code & reward.";
+                return;
+            }
+            try {
+                await db.collection("redeem").doc(code).set({
+                    reward,
+                    usedBy: []
+                });
+                createMsgEl.innerText = "Code created!";
+                showPopup("Code created!", "green");
+                loadCodes();
+            } catch (e) {
+                console.error(e);
+                createMsgEl.innerText = "Error: " + e.message;
+                showPopup("Error creating code!", "red");
+            }
+        }
+
+        async function loadCodes() {
+            try {
+                const snapshot = await db.collection("redeem").get();
+                codesListEl.innerHTML = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const li = document.createElement("li");
+                    li.innerHTML = `<div>${doc.id}</div><div>💎 ${data.reward || 0}</div>`;
+                    if (currentUserRank === "Owner") {
+                        const delBtn = document.createElement("button");
+                        delBtn.textContent = "✖";
+                        delBtn.onclick = () => deleteCode(doc.id);
+                        li.appendChild(delBtn);
+                    }
+                    codesListEl.appendChild(li);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteCode(codeId) {
+            try {
+                await db.collection("redeem").doc(codeId).delete();
+                loadCodes();
+                showPopup("Code deleted!", "yellow");
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Auto-login using Firebase session
+        auth.onAuthStateChanged(user => {
+            if (user) handleUser(user);
+        });
+    </script>
+</body>
+
+</html>

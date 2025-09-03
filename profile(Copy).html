@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Profile - CraftSprint.IO</title>
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            overflow-x: hidden;
+            background: transparent;
+            font-family: 'Minecraft', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            touch-action: manipulation;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .panorama {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: url('images/bg.png') center center / cover no-repeat;
+            animation: movePanorama 40s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .profile-container {
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #44ff44;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 0 20px lime;
+            animation: glow 1.5s infinite alternate;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 10px lime;
+            }
+
+            to {
+                box-shadow: 0 0 30px lime;
+            }
+        }
+
+        .badges {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .badge {
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            position: absolute;
+            top: -16px;
+            z-index: 1;
+            overflow: visible;
+        }
+
+        .badge::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            width: calc(100% + 12px);
+            height: calc(100% + 12px);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 70%);
+            z-index: -1;
+            border-radius: 12px;
+            animation: pulseBadge 2s infinite ease-in-out;
+            filter: blur(2px);
+        }
+
+        .badge::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.7;
+            box-shadow: 0 0 8px white;
+            animation: sparkle 2s infinite ease-in-out;
+        }
+
+        /* VIP Badge Style */
+        .vip {
+            right: -10px;
+            background: gold;
+            color: black;
+            border: 2px solid white;
+            box-shadow: 0 0 10px yellow;
+            transform: rotate(4deg);
+        }
+
+        .vip::before {
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.4), transparent 70%);
+        }
+
+        /* KING Badge Style */
+        .king {
+            left: -10px;
+            background: purple;
+            color: white;
+            border: 2px solid gold;
+            box-shadow: 0 0 10px violet;
+            transform: rotate(-4deg);
+        }
+
+        .king::before {
+            background: radial-gradient(circle, rgba(138, 43, 226, 0.4), transparent 70%);
+        }
+
+        @keyframes pulseBadge {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes sparkle {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: translate(-3px, -3px);
+                opacity: 1;
+            }
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid white;
+            margin: 10px 0;
+            background: #222;
+            object-fit: cover;
+            transition: transform 0.2s ease;
+        }
+
+        .profile-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px lime;
+        }
+
+        #editModeElements {
+            display: none;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            width: 100%;
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group input {
+            width: 90%;
+            padding: 6px;
+            font-family: 'Minecraft';
+            border-radius: 6px;
+            font-size: 14px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            margin-bottom: 8px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 6px #44ff44;
+            outline: none;
+        }
+
+        .field-label {
+            color: #ffcc00;
+            font-size: 15px;
+            margin-top: 10px;
+        }
+
+        .field-value {
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .info-box {
+            background: #222;
+            border-left: 5px solid #44ff44;
+            color: #ccffcc;
+            padding: 10px 15px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #44ff44aa;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .info-box:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 12px #66ff66;
+        }
+
+        .info-box:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 6px #33cc33;
+        }
+
+        .button {
+            width: 40vw;
+            max-width: 260px;
+            height: 40px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
+            font-family: 'Minecraft';
+            font-size: 18px;
+            color: white;
+            text-shadow: 1px 1px black;
+            display: flex;
+            /* ← NEW */
+            align-items: center;
+            /* ← NEW */
+            justify-content: center;
+            /* ← NEW */
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background-color: transparent;
+            margin: 5px 0;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px lime;
+        }
+
+        .button:active {
+            transform: scale(0.88);
+            box-shadow: 0 0 6px #00ff00;
+        }
+
+        @media screen and (max-width: 400px) {
+            .profile-container {
+                padding: 18px;
+            }
+
+            .button {
+                font-size: 15px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="panorama"></div>
+    <div class="profile-container">
+        <div class="badges">
+            <div id="kingBadge" class="badge king" style="display:none;">👑 Owner</div>
+            <div id="vipBadge" class="badge vip" style="display:none;">★ VIP</div>
+        </div><img src="images/steve.png" id="profilePic" class="profile-img" alt="Profile Picture" loading="lazy">
+
+        <div id="editModeElements">
+            <div class="input-group">
+                <input type="text" id="usernameInput" placeholder="Enter new username">
+                <input type="text" id="profilePicUrlInput" placeholder="Paste image URL (https://...)">
+                <input type="file" id="localImageInput" accept="image/*">
+                <div class="info-box">
+                    <strong>Note:</strong> Profile Pic URL will work on both game & website.<br>
+                    Local file will only show on this device.<br>
+                    If you want both online & offline compatibility, use both URL and file.
+                </div>
+            </div>
+        </div>
+
+        <div class="field-label">Username</div>
+        <div class="field-value" id="usernameDisplay">-</div>
+        <div class="field-label">UID</div>
+        <div class="field-value" id="uid">-</div>
+
+        <div class="field-label">Email</div>
+        <div class="field-value" id="email">-</div>
+
+        <div class="field-label">Emeralds</div>
+        <div class="field-value" id="emeralds">0</div>
+
+        <div class="field-label">Highscore</div>
+        <div class="field-value" id="highscore">0</div>
+
+        <div class="field-label">Rank</div>
+        <div class="field-value" id="rank">Player</div>
+
+        <div class="field-label" id="adminMessageLabel" style="display: none;">📢 Message from Admin</div>
+        <div class="field-value" id="adminMessage" style="display: none; color: #ff4444; font-style: italic;"></div>
+
+        <button class="button" id="editButton">✏️ Edit</button>
+        <button class="button" id="logoutButton">Logout</button>
+        <button class="button" id="deleteProfileBtn">Delete Profile</button>
+        <button class="button" id="backButton">Back</button>
+    </div>
+
+
+    <!-- Firebase + LocalStorage Logic -->
+    <script type="module">
+        // 1) Firebase imports & init
+        import {
+            initializeApp
+        } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            updateDoc,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUID = null;
+        let isEditMode = false;
+
+        // 2) Load UI with localStorage data
+        function loadFromLocalStorage() {
+            document.getElementById('usernameDisplay').textContent = localStorage.getItem('cs_username') || '-';
+            document.getElementById('uid').textContent = localStorage.getItem('cs_uid') || '-';
+            document.getElementById('email').textContent = localStorage.getItem('cs_email') || '-';
+            document.getElementById('emeralds').textContent = localStorage.getItem('cs_emeralds') || '0';
+            document.getElementById('highscore').textContent = localStorage.getItem('cs_highscore') || '0';
+            document.getElementById('rank').textContent = localStorage.getItem('cs_rank') || 'Player';
+
+            if (localStorage.getItem('cs_rank') === 'VIP')
+                document.getElementById('vipBadge').style.display = 'block';
+            if (['Owner', 'King'].includes(localStorage.getItem('cs_rank')))
+                document.getElementById('kingBadge').style.display = 'block';
+        }
+
+        // 3) Profile picture logic
+        function loadProfilePic() {
+            const url = localStorage.getItem('cs_profilePicUrl') || '';
+            const b64 = localStorage.getItem('cs_profilePicBase64') || '';
+            const def = 'images/steve.png';
+            if (navigator.onLine && url) document.getElementById('profilePic').src = url;
+            else if (!navigator.onLine && b64) document.getElementById('profilePic').src = b64;
+            else document.getElementById('profilePic').src = def;
+        }
+
+        // 4) Toggle edit inputs
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            document.getElementById('editModeElements').style.display =
+                isEditMode ? 'block' : 'none';
+            document.getElementById('editButton').textContent =
+                isEditMode ? '💾 Save' : '✏️ Edit';
+
+            if (isEditMode) {
+                document.getElementById('usernameInput').value = document.getElementById('usernameDisplay').textContent;
+                document.getElementById('profilePicUrlInput').value = localStorage.getItem('cs_profilePicUrl') || '';
+            } else {
+                saveChanges();
+            }
+        }
+
+        // 5) Save profile changes
+        async function saveChanges() {
+            const name = document.getElementById('usernameInput').value.trim();
+            const url = document.getElementById('profilePicUrlInput').value.trim();
+            const file = document.getElementById('localImageInput').files[0];
+            const updates = {};
+
+            if (name.length < 3 || name.length > 20) {
+                alert('Write Username in 3–20 characters');
+                return;
+            }
+            updates.username = name;
+            localStorage.setItem('cs_username', name);
+            document.getElementById('usernameDisplay').textContent = name;
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    const b64 = reader.result;
+                    localStorage.setItem('cs_profilePicBase64', b64);
+                    if (url.startsWith('http')) localStorage.setItem('cs_profilePicUrl', url);
+                    else localStorage.removeItem('cs_profilePicUrl');
+                    loadProfilePic();
+                    updates.profilePicBase64 = b64;
+                    if (url.startsWith('http')) updates.profilePicUrl = url;
+                    try {
+                        await updateDoc(doc(db, 'users', currentUID), updates);
+                        alert('Profile updated!');
+                    } catch (e) {
+                        console.error(e);
+                        alert('Firestore update error');
+                    }
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            if (url) {
+                if (!url.startsWith('http')) {
+                    alert('Write A Valid URL');
+                    return;
+                }
+                localStorage.setItem('cs_profilePicUrl', url);
+                localStorage.removeItem('cs_profilePicBase64');
+                loadProfilePic();
+                updates.profilePicUrl = url;
+            }
+
+            try {
+                await updateDoc(doc(db, 'users', currentUID), updates);
+                alert('Profile updated!');
+            } catch (e) {
+                console.error(e);
+                alert('Firestore update error');
+            }
+        }
+
+        // 6) Delete profile logic
+        async function deleteProfile() {
+            if (!confirm("Are you sure you want to delete your profile? This action cannot be undone.")) return;
+            const user = auth.currentUser;
+            if (!user) {
+                alert("No user is logged in.");
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, 'users', user.uid));
+                await user.delete();
+                alert("Profile deleted successfully.");
+                location.href = "index.html";
+            } catch (err) {
+                if (err.code === "auth/requires-recent-login") {
+                    alert("Please re-login and try again for security reasons.");
+                } else {
+                    console.error(err);
+                    alert("Failed to delete profile. See console for details.");
+                }
+            }
+        }
+
+        // 7) Initial setup & listeners
+        loadFromLocalStorage();
+        loadProfilePic();
+        window.addEventListener('online', loadProfilePic);
+        window.addEventListener('offline', loadProfilePic);
+
+        onAuthStateChanged(auth, async user => {
+            if (!user) {
+                location.href = 'login.html';
+                return;
+            }
+            currentUID = user.uid;
+            localStorage.setItem('cs_uid', user.uid);
+            localStorage.setItem('cs_email', user.email);
+            document.getElementById('uid').textContent = user.uid;
+            document.getElementById('email').textContent = user.email;
+
+            const snap = await getDoc(doc(db, 'users', user.uid));
+            if (snap.exists()) {
+                const d = snap.data();
+                localStorage.setItem('cs_username', d.username || '');
+                localStorage.setItem('cs_emeralds', d.emeralds || 0);
+                localStorage.setItem('cs_highscore', d.highscore || 0);
+                localStorage.setItem('cs_rank', d.rank || 'Player');
+                if (d.profilePicUrl) localStorage.setItem('cs_profilePicUrl', d.profilePicUrl);
+                if (d.profilePicBase64) localStorage.setItem('cs_profilePicBase64', d.profilePicBase64);
+            }
+            loadFromLocalStorage();
+            loadProfilePic();
+        });
+
+        // Button event bindings
+        document.getElementById('editButton').addEventListener('click', toggleEditMode);
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            if (confirm('Really log out?')) {
+                await signOut(auth);
+                location.href = 'login.html';
+            }
+        });
+        document.getElementById('deleteProfileBtn').addEventListener('click', deleteProfile);
+        document.getElementById('backButton').addEventListener('click', () => history.back());
+    </script>
+
+</body>
+
+</html>

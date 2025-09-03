@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>🎁 Daily Reward & Streak | CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="images/favicon.png" type="image/png" />
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Minecraft', sans-serif;
+            background-image: url('images/bg.png');
+            background-size: cover;
+            background-position: center;
+            animation: scrollBG 60s linear infinite;
+            color: white;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        @keyframes scrollBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            padding-top: 80px;
+            text-shadow: 2px 2px #000;
+        }
+
+        .emerald-counter {
+            font-size: 22px;
+            margin-top: -30px;
+            color: #00ff00;
+            text-shadow: 1px 1px black;
+        }
+
+        h2 {
+            font-size: 28px;
+            color: #ffff55;
+            margin: 10px 0;
+        }
+
+        .streak-info {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .note-box {
+            font-size: 14px;
+            margin: 15px auto;
+            max-width: 320px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 2px solid #999;
+            color: #ccc;
+            line-height: 1.5;
+            user-select: none;
+        }
+
+        .mc-button {
+            width: 280px;
+            height: 52px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            margin: 30px auto 20px;
+            line-height: 52px;
+            font-size: 18px;
+            color: white;
+            text-shadow: 1px 1px black;
+            cursor: pointer;
+            user-select: none;
+            transition: transform .1s;
+        }
+
+        .mc-button:active {
+            transform: scale(0.96);
+        }
+
+        .popup {
+            margin-top: 10px;
+            font-size: 20px;
+            display: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+
+        .green {
+            background-color: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+        }
+
+        .yellow {
+            background-color: rgba(255, 255, 0, 0.2);
+            border: 2px solid #ffff00;
+            color: #ffff55;
+        }
+
+        .red {
+            background-color: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff4444;
+        }
+
+        audio {
+            display: none;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="emerald-counter" id="emeraldCounter">💎 Emeralds: ...</div>
+        <h2>🎁 Daily Reward & Streak</h2>
+        <div class="streak-info" id="streakInfo">Streak: ... days</div>
+        <div class="note-box">
+            ⚠️ <b>Ad Rules:</b><br>
+            ⏳ Wait <b>5–10 seconds</b> after ad opens.<br>
+            🚫 <b>Do NOT tap</b> inside ad.<br>
+            👈 Then press <b>Back</b>.<br>
+            ✅ Reward & streak update automatically.
+        </div>
+        <a href="https://www.profitableratecpm.com/ttpfi253?key=b0fb9bc04b1f44f9828c113df3d4611a" target="_blank" onclick="prepareClaim()">
+            <div class="mc-button">✨ Tap to Claim Emeralds</div>
+        </a>
+        <div class="popup" id="popup"></div>
+        <audio id="emeraldSound" src="sounds/experience_orb_pickup.mp3" preload="auto"></audio>
+    </div>
+    <script type="module">
+        import {
+            initializeApp
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            updateDoc,
+            collection,
+            addDoc
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const today = new Date().toISOString().split('T')[0];
+
+        const popup = document.getElementById("popup");
+        const emeraldCounter = document.getElementById("emeraldCounter");
+        const streakInfo = document.getElementById("streakInfo");
+        const emeraldSound = document.getElementById("emeraldSound");
+
+        let currentUID = null;
+        let currentEmeralds = 0;
+
+        window.prepareClaim = function() {
+            localStorage.setItem("claimPending", "yes");
+        };
+
+        onAuthStateChanged(auth, async user => {
+            if (user) {
+                currentUID = user.uid;
+                const userRef = doc(db, "users", currentUID);
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    currentEmeralds = data.emeralds || 0;
+                    emeraldCounter.textContent = "💎 Emeralds: " + currentEmeralds;
+                    const lastDate = data.lastRewardDate || null;
+                    const lastStreakDate = data.lastStreakDate || null;
+                    let streakCount = data.streakCount || 0;
+
+                    // Calculate streak
+                    if (lastDate === today) {
+                        // Already claimed today, streak unchanged
+                    } else {
+                        const yesterday = new Date(Date.now() - 864e5).toISOString().split('T')[0];
+                        if (lastDate === yesterday) {
+                            streakCount++;
+                        } else {
+                            streakCount = 1;
+                        }
+                        // Save new streak count and lastStreakDate
+                        await updateDoc(userRef, {
+                            streakCount: streakCount,
+                            lastStreakDate: today
+                        });
+                    }
+
+                    streakInfo.textContent = `Streak: ${streakCount} day(s)`;
+
+                    // Handle pending reward
+                    if (localStorage.getItem("claimPending") === "yes") {
+                        localStorage.removeItem("claimPending");
+                        claimRewardFirestore(userRef, data, streakCount);
+                    }
+                } else {
+                    emeraldCounter.textContent = "💎 Emeralds: ?";
+                    streakInfo.textContent = "Streak: ?";
+                }
+            } else {
+                emeraldCounter.textContent = "💎 Emeralds: Login first";
+                streakInfo.textContent = "Streak: -";
+            }
+        });
+
+        async function claimRewardFirestore(userRef, data, streakCount) {
+            if (!currentUID || !data) return;
+
+            const lastDate = data.lastRewardDate || null;
+            if (lastDate === today) {
+                popup.textContent = "❌ You already claimed today's reward!";
+                popup.className = "popup yellow";
+                popup.style.display = "block";
+                return;
+            }
+
+            // Reward formula: base 10 + (streakCount-1)*5, cap at day 7
+            const base = 10;
+            const increment = 5;
+            const capDay = Math.min(streakCount, 7);
+            const reward = base + (capDay - 1) * increment;
+
+            const newEmeralds = (data.emeralds || 0) + reward;
+            await updateDoc(userRef, {
+                emeralds: newEmeralds,
+                lastRewardDate: today
+            });
+
+            // Log proof
+            await addDoc(collection(db, "adLogs"), {
+                uid: currentUID,
+                time: new Date().toISOString(),
+                date: today,
+                emeraldsGiven: reward,
+                type: "dailyStreak",
+                streak: streakCount,
+                userAgent: navigator.userAgent
+            });
+
+            currentEmeralds = newEmeralds;
+            emeraldCounter.textContent = "💎 Emeralds: " + currentEmeralds;
+            popup.textContent = `🎉 +${reward} Emeralds! (Streak Day ${streakCount})`;
+            popup.className = "popup green";
+            popup.style.display = "block";
+
+            if (emeraldSound) emeraldSound.play();
+        }
+    </script>
+</body>
+
+</html>

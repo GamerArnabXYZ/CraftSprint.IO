@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment | CraftSprint.IO</title>
+  <link rel="icon" type="image/png" href="images/favicon.png" />
+  <style>
+    @font-face {
+      font-family: 'Minecraft';
+      src: url('fonts/Minecraft.ttf');
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Minecraft', sans-serif;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('images/bg.png') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-shadow: 1px 1px 2px black;
+      overflow-x: hidden;
+    }
+
+    .xk52g-container {
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.65);
+      border-radius: 15px;
+      margin-top: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: yellow;
+    }
+
+    .f9s3b-box {
+      margin-top: 30px;
+      border: 2px solid #00ff00;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: rgba(0, 50, 0, 0.6);
+    }
+
+    .f9s3b-box h2 {
+      font-size: 18px;
+      color: #00ff00;
+      margin-bottom: 10px;
+    }
+
+    .f9s3b-box p {
+      font-size: 14px;
+      margin: 6px 0;
+    }
+
+    .ss-r9k0l {
+      font-style: italic;
+      color: #ccc;
+      margin-top: 10px;
+    }
+
+    .btn-z7a1d {
+      width: 40vw;
+      max-width: 260px;
+      height: 40px;
+      background-image: url('images/button.png');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      border: none;
+      font-size: 18px;
+      color: white;
+      text-shadow: 1px 1px black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      background-color: transparent;
+      margin: 5px auto;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-z7a1d:active {
+      transform: scale(0.9);
+    }
+
+    .cs-n1v8m {
+      color: #aaa;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="xk52g-container">
+    <h1>Buy VIP Pack – Only $1.99 / ₹173 / ৳244 / 5M OWO</h1>
+
+    <div class="f9s3b-box">
+      <h2>💬 Discord OWO Currency</h2>
+      <p>Pay using: <strong>5,000,000 OWO Coins</strong></p>
+      <p>Send to Discord ID: <strong>@Gamer_Arnab_XYZ#1234</strong></p>
+      <p class="ss-r9k0l">📩 Screenshot required! Send via Discord chat.</p>
+    </div>
+
+    <div class="f9s3b-box">
+      <h2>🇧🇩 Bangladesh Payment</h2>
+      <p class="cs-n1v8m">Coming Soon…</p>
+      <div style="display: none;">
+        <p><strong>Bkash:</strong> 01XXXXXXXXX</p>
+        <p><strong>Nagad:</strong> 01XXXXXXXXX</p>
+        <p class="ss-r9k0l">📩 Email: <strong>arnabdasdas2010@gmail.com</strong></p>
+      </div>
+    </div>
+
+    <div class="f9s3b-box">
+      <h2>🇮🇳 India Payment</h2>
+      <p class="cs-n1v8m">Coming Soon…</p>
+      <div style="display: none;">
+        <p><strong>UPI:</strong> arnabxyz@upi</p>
+        <p><strong>PhonePe:</strong> 9XXXXXXXXX</p>
+        <p class="ss-r9k0l">📩 Email: <strong>arnabdasdas2010@gmail.com</strong></p>
+      </div>
+    </div>
+
+    <div class="f9s3b-box">
+      <h2>🌍 International</h2>
+      <p class="cs-n1v8m">Coming Soon…</p>
+      <div style="display: none;">
+        <p>PayPal: <strong>paypal.me/arnabxyz</strong></p>
+        <p>Amount: <strong>$1.99</strong></p>
+        <p class="ss-r9k0l">📩 Email: <strong>arnabdasdas2010@gmail.com</strong></p>
+      </div>
+    </div>
+
+    <div class="f9s3b-box">
+      <h2>✅ After Payment:</h2>
+      <p>Send screenshot with your CraftSprint.IO username to:</p>
+      <p><strong>arnabdasdas2010@gmail.com</strong></p>
+      <p>VIP will be activated within <strong>24 hours</strong>.</p>
+    </div>
+
+    <button class="btn-z7a1d" onclick="location.href='billing.html'">← Back</button>
+  </div>
+
+  <script>
+    // Disable right click
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    // Disable devtools shortcuts
+    document.onkeydown = function (e) {
+      if (
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || // Ctrl+Shift+I/J
+        (e.ctrlKey && e.keyCode === 85) // Ctrl+U
+      ) {
+        return false;
+      }
+    };
+
+    // Auto console clear and simple branding log
+    setInterval(() => {
+      console.clear();
+      console.log("%cCraftSprint.IO", "color: green; font-size: 16px;");
+    }, 800);
+
+    // Devtools open detection & redirect to blank page
+    (function () {
+      let devtoolsOpen = false;
+      const threshold = 160;
+
+      setInterval(() => {
+        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+        if (widthThreshold || heightThreshold) {
+          if (!devtoolsOpen) {
+            devtoolsOpen = true;
+            // Redirect or blank page to block inspect
+            window.location.href = "about:blank";
+          }
+        } else {
+          devtoolsOpen = false;
+        }
+      }, 1000);
+    })();
+
+    // Eruda detect & block unless dev code is entered
+    const isDev = prompt("Enter dev code") === "arnab123";
+
+    if (!isDev) {
+      setInterval(() => {
+        if (window.eruda || window.__ERUDA__) {
+          document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:30vh;'>Inspect Not Allowed</h1>";
+        }
+      }, 500);
+    }
+  </script>
+</body>
+
+</html>

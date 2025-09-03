@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Messages - CraftSprint.IO</title>
+    <style>
+        body {
+            font-family: 'Minecraft', sans-serif;
+            background: url('images/bg.png') repeat;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .message-container {
+            background: rgba(0, 0, 0, 0.75);
+            border: 3px solid #44ff44;
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0 0 15px lime;
+        }
+
+        #messageList {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        textarea,
+        input {
+            width: 90%;
+            margin: 8px 0;
+            padding: 8px;
+            font-family: 'Minecraft';
+            background: #222;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="message-container">
+        <h1>📬 Your Messages</h1>
+        <div id="messageList">Loading messages...</div>
+
+        <!-- Owner-only Composer -->
+        <div id="adminComposer" style="display:none;">
+            <h2>📨 Send Message (Admin)</h2>
+            <input type="text" id="targetUsername" placeholder="Target Username">
+            <input type="text" id="msgSubject" placeholder="Subject">
+            <textarea id="msgBody" placeholder="Write your message..."></textarea>
+            <button onclick="sendAdminMessage()">Send</button>
+        </div>
+
+        <button onclick="window.location.href='profile.html'">🔙 Back</button>
+    </div>
+
+    <script type="module">
+        import {
+            initializeApp
+        } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const username = localStorage.getItem('cs_username');
+                const rank = localStorage.getItem('cs_rank');
+
+                if (!username) return alert("Username not found. Please log in again.");
+
+                if (rank === "Owner") {
+                    document.getElementById('adminComposer').style.display = 'block';
+                }
+
+                loadMessages(username);
+            }
+        });
+
+        async function loadMessages(username) {
+            const messagesRef = collection(db, "messages", username, "inbox");
+            const snapshot = await getDocs(messagesRef);
+            const listDiv = document.getElementById('messageList');
+            listDiv.innerHTML = "";
+
+            if (snapshot.empty) {
+                listDiv.innerHTML = "<p>No messages found.</p>";
+                return;
+            }
+
+            snapshot.forEach(async (doc) => {
+                const data = doc.data();
+                const from = data.from;
+
+                // Fetch sender's profile pic from Firestore
+                let profilePic = "images/default.png"; // fallback
+                try {
+                    const userDoc = await getDocs(collection(db, "users"));
+                    userDoc.forEach(u => {
+                        if (u.id === from) {
+                            const userData = u.data();
+                            if (userData.profilePic) profilePic = userData.profilePic;
+                        }
+                    });
+                } catch (e) {
+                    console.warn("Avatar fetch failed", e);
+                }
+
+                listDiv.innerHTML += `
+    <div style="margin-bottom:15px;border-bottom:1px solid #555;padding:10px;display:flex;align-items:flex-start;gap:10px;">
+      <img src="${profilePic}" alt="Avatar" style="width:40px;height:40px;border-radius:4px;image-rendering:pixelated;">
+      <div>
+        <strong>${data.subject}</strong><br/>
+        <small>From: ${data.from}</small><br/>
+        <p>${data.body}</p>
+      </div>
+    </div>
+  `;
+            });
+        }
+
+        window.sendAdminMessage = async function() {
+            const targetUsername = document.getElementById("targetUsername").value.trim();
+            const subject = document.getElementById("msgSubject").value.trim();
+            const body = document.getElementById("msgBody").value.trim();
+
+            if (!targetUsername || !subject || !body) {
+                return alert("All fields required");
+            }
+
+            const msgRef = collection(db, "messages", targetUsername, "inbox");
+
+            await addDoc(msgRef, {
+                subject,
+                body,
+                from: "Owner",
+                timestamp: serverTimestamp()
+            });
+
+            alert("Message sent to " + targetUsername + "!");
+        };
+    </script>
+</body>
+
+</html>

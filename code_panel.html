@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Reward Code Panel | Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            font-family: Minecraft, sans-serif;
+            background: url('images/bg.png') center center/cover no-repeat fixed;
+            color: white;
+            padding: 20px;
+        }
+
+        .form-box {
+            max-width: 400px;
+            margin: auto;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 8px lime;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        input,
+        select,
+        textarea,
+        button {
+            width: 80%;
+            padding: 10px;
+            margin: 6px 0;
+            font-family: inherit;
+            font-size: 16px;
+            border: 2px solid white;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+        }
+
+        button {
+            cursor: pointer;
+            background-image: url('images/button.png');
+            background-size: cover;
+            border: none;
+        }
+
+        #message {
+            margin-top: 10px;
+            color: lime;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+    <h1>🎁 Create Reward Code</h1>
+    <div>
+        <div class="form-box">
+            <input id="codeId" placeholder="Enter Code (e.g. EID2025)" />
+
+            <select id="rewardType">
+                <option value="emeralds">Emeralds</option>
+                <option value="skin">Skin</option>
+            </select>
+
+            <input id="rewardValue" placeholder="Reward Value (e.g. 100 or skin id)" />
+
+            <input id="maxUses" type="number" placeholder="Max Uses (optional)" />
+
+            <input id="expiresAt" type="datetime-local" />
+
+            <textarea id="notes" placeholder="Notes (e.g. Eid Gift, Event Bonus)"></textarea>
+
+            <button onclick="createCode()">Create Code</button>
+            <div id="message"></div>
+        </div>
+    </div>
+
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function showMsg(msg, color = 'lime') {
+            const message = document.getElementById("message");
+            message.style.color = color;
+            message.textContent = msg;
+        }
+
+        function createCode() {
+            const codeId = document.getElementById("codeId").value.trim();
+            const rewardType = document.getElementById("rewardType").value;
+            const rewardValue = document.getElementById("rewardValue").value.trim();
+            const maxUses = parseInt(document.getElementById("maxUses").value);
+            const expiresAt = document.getElementById("expiresAt").value;
+            const notes = document.getElementById("notes").value.trim();
+
+            if (!codeId || !rewardValue) {
+                showMsg("Please fill required fields!", "red");
+                return;
+            }
+
+            const codeData = {
+                rewardType,
+                rewardValue: rewardType === "emeralds" ? parseInt(rewardValue) : rewardValue,
+                usedBy: [],
+                createdBy: auth.currentUser.uid,
+                notes
+            };
+
+            if (maxUses) codeData.maxUses = maxUses;
+            if (expiresAt) codeData.expiresAt = new Date(expiresAt).toISOString();
+
+            db.collection("codes").doc(codeId).set(codeData)
+                .then(() => {
+                    showMsg("✅ Code created successfully!");
+                })
+                .catch(err => {
+                    showMsg("❌ Error: " + err.message, "red");
+                });
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.collection("users").doc(user.uid).get().then(doc => {
+                    if (!doc.exists || doc.data().rank !== "Owner") {
+                        alert("Access denied. Only Owners can access this page.");
+                        location.href = "index.html";
+                    }
+                });
+            } else {
+                location.href = "login.html";
+            }
+        });
+    </script>
+</body>
+
+</html>

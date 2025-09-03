@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Redeem Panel</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { margin: 5px; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>Admin Redeem Panel</h1>
+
+  <div>
+    <h2>Create New Code</h2>
+    <input type="text" id="newCode" placeholder="Code ID">
+    <input type="number" id="newReward" placeholder="Reward Emeralds" min="1">
+    <button onclick="createCode()">Create</button>
+    <p id="createMsg"></p>
+  </div>
+
+  <div>
+    <h2>Existing Codes</h2>
+    <ul id="codesList"></ul>
+  </div>
+
+  <script>
+    // === Firebase Config ===
+    const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const codesListEl = document.getElementById("codesList");
+    const createMsgEl = document.getElementById("createMsg");
+
+    // Display all codes
+    function loadCodes() {
+      db.collection("redeem").get().then(snapshot => {
+        codesListEl.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const li = document.createElement("li");
+          li.textContent = `${doc.id} → Reward: ${data.reward || 0} Emeralds, UsedBy: ${data.usedBy ? data.usedBy.length : 0}`;
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "Delete";
+          delBtn.onclick = () => deleteCode(doc.id);
+          li.appendChild(delBtn);
+          codesListEl.appendChild(li);
+        });
+      });
+    }
+
+    // Create a new code (Owner only)
+    async function createCode() {
+      const code = document.getElementById("newCode").value.trim();
+      const reward = parseInt(document.getElementById("newReward").value);
+      const user = auth.currentUser;
+
+      if (!user) { createMsgEl.innerText = "Login required."; return; }
+      if (!code || !reward || reward <= 0) { createMsgEl.innerText = "Enter valid code and reward."; return; }
+
+      const userRef = db.collection("users").doc(user.uid);
+      const codeRef = db.collection("redeem").doc(code);
+
+      try {
+        const userDoc = await userRef.get();
+        if (!userDoc.exists || userDoc.data().rank !== "Owner") {
+          createMsgEl.innerText = "You are not authorized.";
+          return;
+        }
+
+        await codeRef.set({
+          reward: reward,
+          usedBy: []
+        });
+
+        createMsgEl.innerText = "Code created successfully!";
+        loadCodes();
+      } catch (e) {
+        console.error(e);
+        createMsgEl.innerText = "Error: " + e;
+      }
+    }
+
+    // Delete a code (Owner only)
+    async function deleteCode(codeId) {
+      const user = auth.currentUser;
+      if (!user) { alert("Login required."); return; }
+
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      if (!userDoc.exists || userDoc.data().rank !== "Owner") {
+        alert("You are not authorized.");
+        return;
+      }
+
+      try {
+        await db.collection("redeem").doc(codeId).delete();
+        loadCodes();
+      } catch (e) {
+        console.error(e);
+        alert("Error: " + e);
+      }
+    }
+
+    // Auto-login test owner (REMOVE in production!)
+    auth.signInAnonymously().then(() => {
+      loadCodes();
+    }).catch(console.error);
+
+  </script>
+</body>
+</html>

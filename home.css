@@ -1,0 +1,326 @@
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Minecraft', sans-serif;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent
+}
+
+@font-face {
+    font-family: 'Minecraft';
+    src: url('fonts/Minecraft.ttf')
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+    font-family: 'Minecraft', sans-serif;
+    user-select: none;
+    touch-action: manipulation;
+    height: 100vh;
+    width: 100vw
+}
+
+.panorama {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    z-index: -1;
+    animation: movePanorama 40s linear infinite
+}
+
+@keyframes movePanorama {
+    0% {
+        background-position: 0 50%
+    }
+
+    50% {
+        background-position: 100% 50%
+    }
+
+    100% {
+        background-position: 0 50%
+    }
+}
+
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10
+}
+
+#loadingScreen img {
+    width: 80px;
+    height: 80px
+}
+
+#loadingScreen h1 {
+    color: white;
+    margin-top: 15px;
+    font-size: 20px
+}
+
+.container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+    padding-top: 20px;
+    box-sizing: border-box;
+    position: relative
+}
+
+.logo {
+    width: 60vw;
+    max-width: 280px;
+    image-rendering: pixelated
+}
+
+@media(min-width:768px) {
+    .logo {
+        max-width: 400px
+    }
+}
+
+.splash {
+    font-size: 10px;
+    color: yellow;
+    margin-top: 4px;
+    margin-right: -200px;
+    transform: rotate(-10deg);
+    animation: splashFloat 2s infinite ease-in-out;
+    white-space: nowrap;
+    text-shadow: 2px 2px black;
+    overflow: hidden;
+    text-align: center
+}
+
+@keyframes splashFloat {
+
+    0%,
+    100% {
+        transform: rotate(-10deg) scale(1)
+    }
+
+    50% {
+        transform: rotate(-10deg) scale(1.1)
+    }
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 8vh;
+    gap: 12px;
+    width: 100%
+}
+
+.button {
+    width: 70vw;
+    max-width: 260px;
+    height: 48px;
+    background-image: url('images/button.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border: none;
+    font-family: 'Minecraft';
+    font-size: 18px;
+    color: white;
+    text-shadow: 1px 1px black;
+    line-height: 42px;
+    text-align: center;
+    transition: transform 0.1s ease;
+    background-color: transparent
+}
+
+.button:active {
+    transform: scale(.85)
+}
+
+.small-button {
+    width: 130px;
+    height: 32px;
+    font-size: 14px;
+    line-height: 32px
+}
+
+#vipWelcomeReward {
+    display: none;
+    margin-top: 20px
+}
+
+.emerald-rain {
+    position: fixed;
+    top: -50px;
+    width: 24px;
+    height: 24px;
+    z-index: 99;
+    animation: fallEmerald 3s linear forwards;
+    pointer-events: none;
+    image-rendering: pixelated
+}
+
+@keyframes fallEmerald {
+    to {
+        transform: translateY(110vh);
+        opacity: 0
+    }
+}
+
+#vipBuyBtn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: 48px;
+    height: 48px;
+    background-image: url('images/buyvip.png');
+    background-size: 100% 100%;
+    border-radius: 50%;
+    border: .1px solid white;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 44px;
+    cursor: pointer;
+    z-index: 20;
+    font-family: 'Minecraft', sans-serif;
+    display: none;
+    animation: pulseVIP 1s infinite
+}
+
+@keyframes pulseVIP {
+
+    0%,
+    100% {
+        transform: scale(1)
+    }
+
+    50% {
+        transform: scale(1.2)
+    }
+}
+
+.profile-container {
+    position: fixed;
+    bottom: 10vh;
+    left: 2vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 15;
+    cursor: pointer;
+    font-family: 'Minecraft', monospace;
+    color: white;
+    transition: transform 0.1s ease;
+    width: 50px
+}
+
+.profile-text {
+    font-size: 14px;
+    margin-bottom: 4px;
+    text-align: center;
+    user-select: none;
+    text-shadow: 1px 1px 2px black
+}
+
+.profile-icon {
+    width: 50px;
+    height: 50px;
+    background-image: url('images/profile_icon.png');
+    background-size: 100% 100%
+}
+
+.profile-icon:active {
+    transform: scale(0.85)
+}
+
+.preview {
+    position: absolute;
+    right: 10px;
+    bottom: 35px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1
+}
+
+@media(min-width:768px) {
+    .preview {
+        right: 20px;
+        bottom: 50px
+    }
+}
+
+@media(min-width:1200px) {
+    .preview {
+        right: 30px;
+        bottom: 70px
+    }
+}
+
+.player-name {
+    font-size: 12px;
+    color: white;
+    margin-bottom: 6px;
+    text-shadow: 1px 1px black;
+    max-width: 120px;
+    overflow: hidden;
+    text-align: center
+}
+
+.player-preview {
+    position: absolute;
+    bottom: 80px;
+    right: 5px;
+    width: 120px;
+    height: 140px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-size: 100% 100%
+}
+
+#playerCanvas {
+    width: 100%;
+    height: 100%;
+    display: block
+}
+
+.version,
+.credit {
+    position: absolute;
+    bottom: 5px;
+    font-size: 12px;
+    color: #ccc
+}
+
+.version {
+    left: 10px
+}
+
+.credit {
+    right: 10px
+}

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <!-- Prevent pinch/double‐tap zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>CraftSprint.IO</title>
+
+    <!-- Minecraft Font -->
+    <style>
+        /*———————————————————————————————————————————————————————————————————
+      0. Disable selection, dragging, and tap highlights globally
+    ————————————————————————————————————————————————————————————————————*/
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf') format('truetype');
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft', sans-serif;
+
+            /* Disable text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            /* Disable iOS callout on long press */
+            -webkit-touch-callout: none;
+
+            /* Disable tap highlight (the blue overlay) */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+
+            /* Prevent dragging images by default */
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+
+        img,
+        video,
+        canvas {
+            /* Ensure media elements also can’t be dragged */
+            -webkit-user-drag: none;
+            user-drag: none;
+            /* Prevent pointer events if desired (makes elements non-interactive) */
+            /* pointer-events: none; */
+        }
+
+        /*———————————————————————————————————————————————————————————————————
+      1. Loading Overlay
+    ————————————————————————————————————————————————————————————————————*/
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        #loaderSpinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #333;
+            border-top: 6px solid #55ff55;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        #loadingText {
+            margin-top: 16px;
+            font-size: 1.2rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /*———————————————————————————————————————————————————————————————————
+      2. Slider Wrapper & Slides
+    ————————————————————————————————————————————————————————————————————*/
+        #sliderWrapper {
+            visibility: hidden;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #sliderContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            transition: transform 0.8s ease-in-out;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #slide1 {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        }
+
+        #slide2 {
+            background: linear-gradient(135deg, #1a2a6c, #972FAC, #FF8900);
+        }
+
+        #slide3 {
+            background: linear-gradient(135deg, #200122, #6f0000);
+        }
+
+        .slide h2 {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .slide p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 85%;
+        }
+
+        /*———————————————————————————————————————————————————————————————————
+      3. Arrow Navigation
+    ————————————————————————————————————————————————————————————————————*/
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            z-index: 10;
+            padding: 8px;
+            user-select: none;
+            /* Redundant, but explicit */
+        }
+
+        .arrow:hover {
+            color: #55ff55;
+        }
+
+        #arrowLeft {
+            left: 16px;
+        }
+
+        #arrowRight {
+            right: 16px;
+        }
+
+        /*———————————————————————————————————————————————————————————————————
+      4. “Get Started” Button
+    ————————————————————————————————————————————————————————————————————*/
+        #getStartedBtn {
+            margin-top: 18px;
+            padding: 12px 24px;
+            background: #55ff55;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #000;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        #getStartedBtn:hover {
+            background: #00cc00;
+        }
+
+        #getStartedBtn:active {
+            transform: scale(0.95);
+        }
+
+        /*———————————————————————————————————————————————————————————————————
+      5. Slide Indicators (Dots)
+    ————————————————————————————————————————————————————————————————————*/
+        #slideIndicators {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 5;
+        }
+
+        .indicatorDot {
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+        }
+
+        .indicatorDot.active {
+            background: #55ff55;
+        }
+
+        /*———————————————————————————————————————————————————————————————————
+      6. Hide Native Scrollbars, etc.
+    ————————————————————————————————————————————————————————————————————*/
+        ::-webkit-scrollbar {
+            display: none;
+            /* Hide scrollbar for WebKit */
+        }
+
+        ::-webkit-overflow-scrolling {
+            touch-action: none;
+        }
+
+        /* Ensure body cannot be scrolled/panned */
+        html,
+        body {
+            overscroll-behavior: none;
+            touch-action: none;
+        }
+
+        /*———————————————————————————————————————————————————————————————————
+      7. Audio Element Hidden
+    ————————————————————————————————————————————————————————————————————*/
+        audio {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!--———————————————————————————————————————————————————————————————————
+    Loading Screen
+  ————————————————————————————————————————————————————————————————————-->
+    <div id="loadingOverlay">
+        <div id="loaderSpinner"></div>
+        <div id="loadingText">CraftSprint.IO is preparing...</div>
+    </div>
+
+    <!--———————————————————————————————————————————————————————————————————
+    Background Music Player (no autoplay attribute)
+  ————————————————————————————————————————————————————————————————————-->
+    <audio id="bgMusic">
+        <source id="musicSource" src="" type="audio/mp3" />
+    </audio>
+
+    <!--———————————————————————————————————————————————————————————————————
+    Slider Wrapper & Slides
+  ————————————————————————————————————————————————————————————————————-->
+    <div id="sliderWrapper">
+        <div id="sliderContainer">
+            <!-- Slide 1 -->
+            <div class="slide" id="slide1">
+                <h2>Welcome to CraftSprint.IO</h2>
+                <img src="images/favicon.png" alt="CraftSprint Logo" style="width: 40vw; max-width: 300px; margin: 12px 0;" />
+                <p>Dash through blocky worlds, dodge obstacles, and collect emeralds in this Minecraft-style endless runner!</p>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="slide" id="slide2">
+                <h2>Multiplayer & Ranks</h2>
+                <p>Challenge friends online, climb the leaderboard, and earn ranks: <span style="color: gold;">VIP</span> &amp; <span style="color: #DA0013;">VIP+</span> statuses await!</p>
+                <p style="font-size: 1.6rem; color: lime; ">[Coming soon]</p>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="slide" id="slide3">
+                <h2>Unlock Skins & VIP Perks</h2>
+                <p>Spend emeralds earned in-game to unlock skins. Upgrade to <span style="color: gold;">VIP</span> for exclusive capes, badges, and special boosts!</p>
+                <p style="font-size: 1.6rem; color: lime; ">[Coming soon]</p>
+                <button id="getStartedBtn">Let’s Sprint!</button>
+            </div>
+        </div>
+
+        <!-- Arrow Navigation -->
+        <div class="arrow" id="arrowLeft">&#8249;</div>
+        <div class="arrow" id="arrowRight">&#8250;</div>
+
+        <!-- Slide Indicators -->
+        <div id="slideIndicators"></div>
+    </div>
+
+    <!--———————————————————————————————————————————————————————————————————
+    JavaScript: Slider + Music + First-Visit Logic
+  ————————————————————————————————————————————————————————————————————-->
+    <script>
+        // ——— (1) “First-Time Only” Redirect ———
+        if (localStorage.getItem("hasVisitedCraftSprint") === "true") {
+            window.location.href = "register.html";
+        } else {
+            localStorage.setItem("hasVisitedCraftSprint", "true");
+        }
+
+        // ——— (2) References to DOM Elements ———
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const sliderWrapper = document.getElementById('sliderWrapper');
+        const sliderContainer = document.getElementById('sliderContainer');
+        const slides = document.querySelectorAll('.slide');
+        const arrowLeft = document.getElementById('arrowLeft');
+        const arrowRight = document.getElementById('arrowRight');
+        const getStartedBtn = document.getElementById('getStartedBtn');
+        const indicatorContainer = document.getElementById('slideIndicators');
+
+        let currentIndex = 0;
+        const totalSlides = slides.length;
+
+        // Swipe variables
+        let startX = 0,
+            endX = 0;
+
+        // Build slide indicator dots
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('indicatorDot');
+            if (i === 0) dot.classList.add('active');
+            indicatorContainer.appendChild(dot);
+        }
+
+        // ——— (3) On Window Load: Hide Loader, Show Slider ———
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                sliderWrapper.style.visibility = 'visible';
+                updateArrows();
+                // Defer music start until user interaction
+                document.addEventListener('touchend', startMusicOnce, {
+                    once: true
+                });
+                document.addEventListener('click', startMusicOnce, {
+                    once: true
+                });
+            }, 1000); // 1 second delay
+        });
+
+        // ——— (4) Slider Navigation Functions ———
+        function goToSlide(index) {
+            if (index < 0) index = 0;
+            if (index > totalSlides - 1) index = totalSlides - 1;
+            currentIndex = index;
+            sliderContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+            updateArrows();
+            updateIndicators();
+        }
+
+        function updateArrows() {
+            arrowLeft.style.visibility = (currentIndex === 0) ? 'hidden' : 'visible';
+            arrowRight.style.visibility = (currentIndex === totalSlides - 1) ? 'hidden' : 'visible';
+        }
+
+        function updateIndicators() {
+            const dots = document.querySelectorAll('.indicatorDot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === currentIndex);
+            });
+        }
+
+        function nextSlide() {
+            if (currentIndex < totalSlides - 1) {
+                goToSlide(currentIndex + 1);
+            } else {
+                redirectToRegister();
+            }
+        }
+
+        function prevSlide() {
+            if (currentIndex > 0) {
+                goToSlide(currentIndex - 1);
+            }
+        }
+
+        function redirectToRegister() {
+            window.location.href = 'register.html';
+        }
+
+        // ——— (5) Touch Swipe Event Listeners ———
+        sliderContainer.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        });
+
+        sliderContainer.addEventListener('touchmove', (e) => {
+            endX = e.touches[0].clientX;
+        });
+
+        sliderContainer.addEventListener('touchend', () => {
+            const diff = startX - endX;
+            if (Math.abs(diff) > 50) {
+                diff > 0 ? nextSlide() : prevSlide();
+            }
+        });
+
+        arrowRight.addEventListener('click', nextSlide);
+        arrowLeft.addEventListener('click', prevSlide);
+        getStartedBtn.addEventListener('click', redirectToRegister);
+
+        goToSlide(0);
+
+        // ——— (6) Randomized Background Music, No Repeats ———
+        const tracks = [
+            "music/Sweden(C418).mp3",
+            "music/Haggstrom(C418).mp3",
+            "music/WetHands(C418).mp3",
+            "music/Minecraft(C418).mp3"
+        ];
+        let shuffled = [];
+        let trackIndex = 0;
+
+        const audio = document.getElementById("bgMusic");
+        const source = document.getElementById("musicSource");
+
+        function shuffleArray(array) {
+            const arr = array.slice();
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function initPlaylist() {
+            shuffled = shuffleArray(tracks);
+            trackIndex = 0;
+            playCurrentTrack();
+        }
+
+        function playCurrentTrack() {
+            source.src = shuffled[trackIndex];
+            audio.load();
+            audio.play().catch(() => {
+                // Play may fail if not user-initiated; we invoked this during touch/click, so it should succeed.
+            });
+        }
+
+        audio.addEventListener("ended", () => {
+            trackIndex++;
+            if (trackIndex >= shuffled.length) {
+                shuffled = shuffleArray(tracks);
+                trackIndex = 0;
+            }
+            playCurrentTrack();
+        });
+
+        function startMusicOnce() {
+            initPlaylist();
+        }
+    </script>
+</body>
+
+</html>

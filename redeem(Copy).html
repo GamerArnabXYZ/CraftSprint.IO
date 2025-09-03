@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Redeem Codes</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input, button { margin: 5px; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 5px 0; }
+        .owner-panel { margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px; }
+        #loginDiv { margin-bottom: 20px; border-bottom: 2px solid #ccc; padding-bottom: 20px; }
+    </style>
+</head>
+
+<body>
+    <h1>Redeem Codes</h1>
+
+    <!-- Login form -->
+    <div id="loginDiv">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p id="loginMsg"></p>
+    </div>
+
+    <!-- Player redemption -->
+    <div id="playerDiv" style="display:none;">
+        <h2>Redeem Code</h2>
+        <input type="text" id="redeemCode" placeholder="Enter Code">
+        <button onclick="redeemCode()">Redeem</button>
+        <p id="redeemMsg"></p>
+    </div>
+
+    <!-- Owner admin panel -->
+    <div class="owner-panel" id="ownerPanel" style="display:none;">
+        <h2>Admin Panel</h2>
+        <h3>Create New Code</h3>
+        <input type="text" id="newCode" placeholder="Code ID">
+        <input type="number" id="newReward" placeholder="Reward Emeralds" min="1">
+        <button onclick="createCode()">Create</button>
+        <p id="createMsg"></p>
+
+        <h3>Existing Codes</h3>
+        <ul id="codesList"></ul>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const loginMsgEl = document.getElementById("loginMsg");
+        const redeemMsgEl = document.getElementById("redeemMsg");
+        const codesListEl = document.getElementById("codesList");
+        const createMsgEl = document.getElementById("createMsg");
+        const ownerPanelEl = document.getElementById("ownerPanel");
+        const playerDivEl = document.getElementById("playerDiv");
+
+        let currentUserRank = null;
+        let currentUserId = null;
+
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            loginMsgEl.textContent = "";
+
+            if (!email || !password) { loginMsgEl.textContent = "Please fill in both fields."; return; }
+
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                currentUserId = userCredential.user.uid;
+
+                const userDoc = await db.collection("users").doc(currentUserId).get();
+                if (!userDoc.exists) { loginMsgEl.textContent = "User data not found!"; return; }
+
+                const userData = userDoc.data();
+                currentUserRank = userData.rank;
+
+                loginMsgEl.textContent = "Login successful!";
+                document.getElementById("loginDiv").style.display = "none";
+                playerDivEl.style.display = "block";
+
+                if (currentUserRank === "Owner") {
+                    ownerPanelEl.style.display = "block";
+                    loadCodes();
+                }
+
+            } catch (err) {
+                console.error(err);
+                loginMsgEl.textContent = "Login error: " + err.message;
+            }
+        }
+
+        async function redeemCode() {
+            const codeId = document.getElementById("redeemCode").value.trim();
+            if (!codeId) { redeemMsgEl.innerText = "Enter a code."; return; }
+            if (!currentUserId) { redeemMsgEl.innerText = "Login required."; return; }
+
+            const userRef = db.collection("users").doc(currentUserId);
+            const codeRef = db.collection("redeem").doc(codeId);
+
+            try {
+                const [userDoc, codeDoc] = await Promise.all([userRef.get(), codeRef.get()]);
+                if (!codeDoc.exists) { redeemMsgEl.innerText = "Invalid code."; return; }
+
+                const userData = userDoc.data();
+                const codeData = codeDoc.data();
+
+                if (codeData.usedBy && codeData.usedBy.includes(currentUserId)) {
+                    redeemMsgEl.innerText = "You already redeemed this code."; return;
+                }
+
+                // Apply redeem reward exactly
+                const updatedEmeralds = (userData.emeralds || 0) + (codeData.reward || 0);
+                const redeemedCodes = userData.redeemedCodes || [];
+                redeemedCodes.push(codeId);
+
+                await Promise.all([
+                    userRef.update({ emeralds: updatedEmeralds, redeemedCodes: redeemedCodes }),
+                    codeRef.update({ usedBy: [...(codeData.usedBy || []), currentUserId] })
+                ]);
+
+                redeemMsgEl.innerText = `Success! You received ${codeData.reward || 0} emeralds.`;
+
+            } catch (e) {
+                console.error(e);
+                redeemMsgEl.innerText = "Error: " + e.message;
+            }
+        }
+
+        async function createCode() {
+            const code = document.getElementById("newCode").value.trim();
+            const reward = parseInt(document.getElementById("newReward").value);
+            if (!code || !reward || reward <= 0) { createMsgEl.innerText = "Enter valid code and reward."; return; }
+
+            try {
+                await db.collection("redeem").doc(code).set({ reward, usedBy: [] });
+                createMsgEl.innerText = "Code created successfully!";
+                loadCodes();
+            } catch (e) {
+                console.error(e);
+                createMsgEl.innerText = "Error: " + e.message;
+            }
+        }
+
+        async function deleteCode(codeId) {
+            try {
+                await db.collection("redeem").doc(codeId).delete();
+                loadCodes();
+            } catch (e) {
+                console.error(e);
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function loadCodes() {
+            try {
+                const snapshot = await db.collection("redeem").get();
+                codesListEl.innerHTML = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const li = document.createElement("li");
+                    li.textContent = `${doc.id} → Reward: ${data.reward || 0} Emeralds, UsedBy: ${data.usedBy?.length || 0}`;
+                    if (currentUserRank === "Owner") {
+                        const delBtn = document.createElement("button");
+                        delBtn.textContent = "Delete";
+                        delBtn.onclick = () => deleteCode(doc.id);
+                        li.appendChild(delBtn);
+                    }
+                    codesListEl.appendChild(li);
+                });
+            } catch (e) { console.error(e); }
+        }
+    </script>
+</body>
+</html>

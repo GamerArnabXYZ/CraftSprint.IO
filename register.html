@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Register - CraftSprint.IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('fonts/Minecraft.ttf');
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Minecraft', sans-serif;
+
+            /* Disable text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            /* Disable iOS callout on long press */
+            -webkit-touch-callout: none;
+
+            /* Disable tap highlight (the blue overlay) */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            overflow-x: hidden;
+            background: transparent;
+            font-family: 'Minecraft', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            touch-action: manipulation;
+            height: 100vh;
+            width: 100vw;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .panorama {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: url('images/bg.png') center center / cover no-repeat;
+            animation: movePanorama 40s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes movePanorama {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #44ff44;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 0 20px lime;
+            animation: glow 1.5s infinite alternate;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin-top: 12vh;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 10px lime;
+            }
+
+            to {
+                box-shadow: 0 0 30px lime;
+            }
+        }
+
+        h1 {
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 90%;
+            padding: 6px;
+            font-family: 'Minecraft';
+            border-radius: 6px;
+            font-size: 14px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            margin-bottom: 8px;
+        }
+
+        input:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 6px #44ff44;
+            outline: none;
+        }
+
+        button {
+            width: 40vw;
+            max-width: 260px;
+            height: 40px;
+            background-image: url('images/button.png');
+            background-size: 100% 100%;
+            border: none;
+            font-family: 'Minecraft';
+            font-size: 18px;
+            color: white;
+            text-shadow: 1px 1px black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            background-color: transparent;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px lime;
+        }
+
+        button:active {
+            transform: scale(0.88);
+            box-shadow: 0 0 6px #00ff00;
+        }
+
+        #error {
+            color: red;
+            margin-top: 10px;
+        }
+
+        #success {
+            color: lime;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script>
+        // Instant redirect if already registered
+        if (localStorage.getItem("uid") && localStorage.getItem("email")) {
+            window.location.replace("home.html");
+        }
+    </script>
+
+    <div class="panorama"></div>
+
+    <div class="container">
+        <h1>Create Account</h1>
+        <input type="text" id="username" placeholder="Username (e.g. Steve)">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <input type="password" id="confirm" placeholder="Confirm Password">
+        <button onclick="register()">Register</button>
+
+        <p style="margin-top: 12px; font-size: 12px; color: #ccc;">
+            Already registered?
+            <a href="login.html" style="color: #00ff00; text-decoration: underline;">
+                Login now!
+            </a>
+        </p>
+
+        <div id="error"></div>
+        <div id="success"></div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoe0WmbD5_PBCtLAOTqPg_3BYcMevXU-o",
+            authDomain: "craftsprintio.firebaseapp.com",
+            projectId: "craftsprintio",
+            storageBucket: "craftsprintio.appspot.com",
+            messagingSenderId: "51453864626",
+            appId: "1:51453864626:web:64fd0a3423e608df7877ab",
+            measurementId: "G-MFH20CF27R"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        async function register() {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm').value;
+            const errorEl = document.getElementById('error');
+            const successEl = document.getElementById('success');
+            errorEl.textContent = "";
+            successEl.textContent = "";
+            const btn = document.querySelector("button");
+            btn.disabled = true;
+            btn.textContent = "Please wait...";
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+            if (username.length < 3 || username.length > 20) {
+                errorEl.textContent = "Username must be 3–20 characters.";
+                btn.disabled = false;
+                btn.textContent = "Register";
+                return;
+            }
+
+            if (!emailRegex.test(email)) {
+                errorEl.textContent = "Enter a valid email.";
+                btn.disabled = false;
+                btn.textContent = "Register";
+                return;
+            }
+
+            if (password.length < 6) {
+                errorEl.textContent = "Password must be at least 6 characters.";
+                btn.disabled = false;
+                btn.textContent = "Register";
+                return;
+            }
+
+            if (password !== confirm) {
+                errorEl.textContent = "Passwords do not match.";
+                btn.disabled = false;
+                btn.textContent = "Register";
+                return;
+            }
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const uid = userCredential.user.uid;
+
+                await db.collection("users").doc(uid).set({
+                    username: username,
+                    email: email,
+                    emeralds: 0,
+                    rank: "Player",
+                    profilePicUrl: "images/default.png",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Save individual values
+                
+                localStorage.setItem("username", username);
+                localStorage.setItem("uid", uid);
+                localStorage.setItem("email", email);
+                localStorage.setItem("emeralds", "0");
+                localStorage.setItem("rank", "Player");
+                localStorage.setItem("profilePicUrl", "images/default.png");
+
+
+                successEl.textContent = "Registration successful!";
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 1500);
+
+            } catch (err) {
+                errorEl.textContent = err.message;
+                btn.disabled = false;
+                btn.textContent = "Register";
+            }
+        }
+    </script>
+
+</body>
+
+</html>
